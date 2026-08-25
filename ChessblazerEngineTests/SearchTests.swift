@@ -28,6 +28,14 @@ struct SearchTests {
         #expect(moveToNotation(move: move!) == "e1e8")
     }
     
+    @Test func mateInOneSurvivesNullMoveAndLmr() {
+        let game = Game()
+        game.loadFromFen(fen: "6k1/8/6K1/8/8/8/8/4R3 w - - 0 1")
+        let move = findBestMove(game: game, depth: 4, maximizingPlayer: true)
+        #expect(moveToNotation(move: move!) == "e1e8")
+        #expect(game.boardState.undoStack.isEmpty)
+    }
+    
     @Test func stalemateIsDraw() {
         let game = Game()
         game.loadFromFen(fen: "k7/8/1Q6/8/8/8/8/K7 b - - 0 1")

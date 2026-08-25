@@ -79,7 +79,7 @@ struct PieceBitboards {
 }
 
 struct UndoInfo {
-    var move: Move
+    var move: Move?
     var lastMove: Move?
     var color: Piece.Color
     var castles: Set<Character>
@@ -302,9 +302,39 @@ struct BoardState {
         zobristKey ^= Zobrist.enPassantKey(enPassantHashFile())
     }
     
+    mutating func playNull() {
+        let previousEpFile = enPassantHashFile()
+        undoStack.append(
+            UndoInfo(
+                move: nil,
+                lastMove: lastMove,
+                color: currentTurnColor,
+                castles: castlesAvailable,
+                occupancy: occupancy,
+                attackBitboard: attackBitboard,
+                enPassant: enPassant,
+                zobristKey: zobristKey,
+                currentValidMoves: nil
+            )
+        )
+        lastMove = nil
+        enPassant = "-"
+        currentTurnColor = currentTurnColor.getOppositeColor()
+        attackBitboard = generateAllAttackedSquares(
+            bitboards: bitboards,
+            currentColor: currentTurnColor,
+            occupancy: occupancy
+        )
+        zobristKey ^= Zobrist.blackToMove
+        zobristKey ^= Zobrist.enPassantKey(previousEpFile)
+        zobristKey ^= Zobrist.enPassantKey(enPassantHashFile())
+    }
+    
     mutating func unplay() {
         guard let undo = undoStack.popLast() else { return }
-        revertBitboards(undo.move)
+        if let move = undo.move {
+            revertBitboards(move)
+        }
         lastMove = undo.lastMove
         currentTurnColor = undo.color
         castlesAvailable = undo.castles

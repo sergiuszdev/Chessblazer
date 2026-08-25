@@ -67,6 +67,22 @@ struct TranspositionTableTests {
         #expect(game.boardState.undoStack.isEmpty)
     }
     
+    @Test func deeperSearchStillFindsMateInOne() {
+        let game = Game()
+        game.loadFromFen(fen: "6k1/8/6K1/8/8/8/8/4R3 w - - 0 1")
+        let move = findBestMove(game: game, depth: 4, maximizingPlayer: true)
+        #expect(moveToNotation(move: move!) == "e1e8")
+        #expect(game.boardState.undoStack.isEmpty)
+    }
+    
+    @Test func orderMovesPutsKillerAheadOfOtherQuiets() {
+        let quietA = Move(fromSquare: 0, targetSquare: 8, pieceValue: Piece.ColoredPieces.whitePawn.rawValue, captureValue: 0)
+        let quietB = Move(fromSquare: 1, targetSquare: 17, pieceValue: Piece.ColoredPieces.whiteKnight.rawValue, captureValue: 0)
+        var moves = [quietA, quietB]
+        orderMoves(&moves, ttMove: nil, killers: (quietB, nil))
+        #expect(moves[0].fromSquare == 1)
+    }
+    
     @Test func hashOptionResizesTable() {
         var options = EngineUciOptions()
         #expect(options.hashSizeMB == 16)

@@ -25,6 +25,19 @@ struct ZobristTests {
         #expect(game.boardState.zobristKey == Zobrist.compute(game.boardState))
     }
     
+    @Test func nullMoveFlipsSideAndRestoresKey() {
+        let game = Game()
+        let startKey = game.boardState.zobristKey
+        game.playNull()
+        #expect(game.boardState.currentTurnColor == .black)
+        #expect(game.boardState.zobristKey == Zobrist.compute(game.boardState))
+        #expect(game.boardState.zobristKey != startKey)
+        game.unplay()
+        #expect(game.boardState.currentTurnColor == .white)
+        #expect(game.boardState.zobristKey == startKey)
+        #expect(game.boardState.undoStack.isEmpty)
+    }
+    
     @Test func startposThenE4MatchesFen() {
         let played = Game()
         let e2e4 = played.boardState.currentValidMoves.first { moveToNotation(move: $0) == "e2e4" }!

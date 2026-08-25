@@ -124,12 +124,37 @@ private struct TTEntry {
     }
 }
 
-func orderMoves(_ moves: inout [Move], ttMove: Move?) {
-    guard let ttMove, let from = ttMove.fromSquare, let to = ttMove.targetSquare else { return }
-    guard let index = moves.firstIndex(where: { move in
-        move.fromSquare == from
-            && move.targetSquare == to
-            && (ttMove.promotionPiece == 0 || move.promotionPiece == ttMove.promotionPiece)
-    }), index != 0 else { return }
-    moves.swapAt(0, index)
+func orderMoves(
+    _ moves: inout [Move],
+    ttMove: Move?,
+    killers: (Move?, Move?) = (nil, nil),
+    history: [[Int]]? = nil
+) {
+    moves.sort { lhs, rhs in
+        moveOrderScore(lhs, ttMove: ttMove, killers: killers, history: history)
+            > moveOrderScore(rhs, ttMove: ttMove, killers: killers, history: history)
+    }
+}
+
+private func isSameMove(_ lhs: Move, _ rhs: Move?) -> Bool {
+    guard let rhs, let from = rhs.fromSquare, let to = rhs.targetSquare else { return false }
+    return lhs.fromSquare == from
+        && lhs.targetSquare == to
+        && (rhs.promotionPiece == 0 || lhs.promotionPiece == rhs.promotionPiece)
+}
+
+private func moveOrderScore(
+    _ move: Move,
+    ttMove: Move?,
+    killers: (Move?, Move?),
+    history: [[Int]]?
+) -> Int {
+    if isSameMove(move, ttMove) { return 1_000_000 }
+    if isTactical(move) { return 500_000 + move.moveValue() }
+    if isSameMove(move, killers.0) { return 400_000 }
+    if isSameMove(move, killers.1) { return 300_000 }
+    guard let history, let target = move.targetSquare, move.pieceValue != 0 else { return 0 }
+    let slot = PieceBitboards.slot(for: move.pieceValue)
+    guard (0..<history.count).contains(slot), (0..<64).contains(target) else { return 0 }
+    return history[slot][target]
 }
