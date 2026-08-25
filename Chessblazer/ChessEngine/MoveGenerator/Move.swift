@@ -13,6 +13,7 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         hasher.combine(fromSquare!+targetSquare!+enPasssantCapture)
     }
     
+    var castlingRookOrigin = 0
     var castlingRookDestination = 0
     var castlingKingDestination = 0
     var promotionPiece: Int = 0
@@ -50,14 +51,14 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         self.promotionPiece = promotionPiece
     }
     
-    init(fromSquare: Int, targetSquare: Int, kingValue: Int, rookValue: Int, kingDestination: Int, rookDestination: Int) {
-        self.fromSquare = fromSquare
-        self.targetSquare = targetSquare
+    init(kingFrom: Int, kingTo: Int, rookFrom: Int, rookTo: Int, kingValue: Int, rookValue: Int) {
+        self.fromSquare = kingFrom
+        self.targetSquare = kingTo
         self.pieceValue = kingValue
         self.captureValue = rookValue
-        self.castlingKingDestination = kingDestination
-        self.castlingRookDestination = rookDestination
-        
+        self.castlingKingDestination = kingTo
+        self.castlingRookOrigin = rookFrom
+        self.castlingRookDestination = rookTo
     }
     
     static func == (lhs: Move, rhs: Move) -> Bool {

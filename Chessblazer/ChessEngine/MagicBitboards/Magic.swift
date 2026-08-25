@@ -9,30 +9,16 @@ import Foundation
 
 class Magic {
     
-    static func whitePiecesBitboards(bitboards: [Int: Bitboard]) -> Bitboard {
-        var bitboard = Bitboard(0)
-        
-        for board in bitboards {
-            if Piece.checkColor(piece: board.key) == .white {
-                bitboard = bitboard | board.value
-            }
-        }
-        return bitboard
+    static func whitePiecesBitboards(bitboards: PieceBitboards) -> Bitboard {
+        bitboards.occupancy().white
     }
     
-    static func blackPiecesBitboards(bitboards: [Int: Bitboard]) -> Bitboard {
-        var bitboard = Bitboard(0)
-        
-        for board in bitboards {
-            if Piece.checkColor(piece: board.key) == .black {
-                bitboard = bitboard | board.value
-            }
-        }
-        return bitboard
+    static func blackPiecesBitboards(bitboards: PieceBitboards) -> Bitboard {
+        bitboards.occupancy().black
     }
     
-    static func allPieces(bitboards: [Int: Bitboard]) -> Bitboard {
-        return whitePiecesBitboards(bitboards: bitboards) | blackPiecesBitboards(bitboards: bitboards)
+    static func allPieces(bitboards: PieceBitboards) -> Bitboard {
+        bitboards.occupancy().all
     }
     
     static func createAllBlockers(movementMask: Bitboard) -> [Bitboard] {

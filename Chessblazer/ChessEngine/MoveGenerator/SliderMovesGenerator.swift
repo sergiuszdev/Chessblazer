@@ -6,21 +6,18 @@
 //
 
 import Foundation
-func generateRookMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move]) {
-    let whitePieces = Magic.whitePiecesBitboards(bitboards: bitboards)
-    let blackPieces = Magic.blackPiecesBitboards(bitboards: bitboards)
-    let allPieces = whitePieces | blackPieces
-    let blockerBitboard = allPieces & Rook.masks[square] // & checkRayMask
+
+func generateRookMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
+    let blockerBitboard = occupancy.all & Rook.masks[square]
     var movesBitboard = Rook.lookUpTable[square]![magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]!
     var pieceValue = 0
     
     if currentColor == .white {
-        movesBitboard = movesBitboard & ~whitePieces
+        movesBitboard = movesBitboard & ~occupancy.white
         pieceValue = Piece.ColoredPieces.whiteRook.rawValue
     } else {
-        movesBitboard = movesBitboard & ~blackPieces
+        movesBitboard = movesBitboard & ~occupancy.black
         pieceValue = Piece.ColoredPieces.blackRook.rawValue
-
     }
     while movesBitboard != 0 {
         let targetSquare: Int = Bitboard.popLSB(&movesBitboard)
@@ -28,21 +25,17 @@ func generateRookMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, sq
     }
 }
 
-func generateRookMovesForQueen(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move]) {
-    let whitePieces = Magic.whitePiecesBitboards(bitboards: bitboards)
-    let blackPieces = Magic.blackPiecesBitboards(bitboards: bitboards)
-    let allPieces = whitePieces | blackPieces
-    let blockerBitboard = allPieces & Rook.masks[square] // & checkRayMask
+func generateRookMovesForQueen(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
+    let blockerBitboard = occupancy.all & Rook.masks[square]
     var movesBitboard = Rook.lookUpTable[square]![magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]!
     var pieceValue = 0
     
     if currentColor == .white {
-        movesBitboard = movesBitboard & ~whitePieces
+        movesBitboard = movesBitboard & ~occupancy.white
         pieceValue = Piece.ColoredPieces.whiteQueen.rawValue
     } else {
-        movesBitboard = movesBitboard & ~blackPieces
+        movesBitboard = movesBitboard & ~occupancy.black
         pieceValue = Piece.ColoredPieces.blackQueen.rawValue
-
     }
     while movesBitboard != 0 {
         let targetSquare: Int = Bitboard.popLSB(&movesBitboard)
@@ -50,88 +43,66 @@ func generateRookMovesForQueen(bitboards: [Int: Bitboard], currentColor: Piece.C
     }
 }
 
-func generateRookAttacks(bitboards: [Int: Bitboard], square: Int, friendlyBitboard: Bitboard) -> Bitboard {
-    let whitePieces = Magic.whitePiecesBitboards(bitboards: bitboards)
-    let blackPieces = Magic.blackPiecesBitboards(bitboards: bitboards)
-    let allPieces = whitePieces | blackPieces
-    let blockerBitboard = allPieces & Rook.masks[square] // & checkRayMask
+func generateRookAttacks(square: Int, friendlyBitboard: Bitboard, occupancy: Occupancy) -> Bitboard {
+    let blockerBitboard = occupancy.all & Rook.masks[square]
     var movesBitboard = Rook.lookUpTable[square]![magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]!
     movesBitboard = movesBitboard & ~friendlyBitboard
     return movesBitboard
 }
 
-func generateBishopMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color,square: Int, moves: inout [Move]) {
-    
-    let whitePieces = Magic.whitePiecesBitboards(bitboards: bitboards)
-    let blackPieces = Magic.blackPiecesBitboards(bitboards: bitboards)
-    let allPieces = whitePieces | blackPieces
-    
-    let blockerBitboard = allPieces & Bishop.masks[square] // & checkRayMask
-    
+func generateBishopMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
+    let blockerBitboard = occupancy.all & Bishop.masks[square]
     var movesBitboard = Bishop.lookUpTable[square]![magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]!
     
     var pieceValue = 0
     if currentColor == .white {
-        movesBitboard = movesBitboard & ~whitePieces
+        movesBitboard = movesBitboard & ~occupancy.white
         pieceValue = Piece.ColoredPieces.whiteBishop.rawValue
     } else {
-        movesBitboard = movesBitboard & ~blackPieces
+        movesBitboard = movesBitboard & ~occupancy.black
         pieceValue = Piece.ColoredPieces.blackBishop.rawValue
-
     }
     
     while movesBitboard != 0 {
-        
         let targetSquare: Int = Bitboard.popLSB(&movesBitboard)
         moves.append(Move(fromSquare: square, targetSquare: targetSquare, pieceValue: pieceValue, captureValue: getPieceValueFromField(at: targetSquare, bitboards: bitboards)))
     }
 }
 
-func generateBishopMovesForQueen(bitboards: [Int: Bitboard], currentColor: Piece.Color,square: Int, moves: inout [Move]) {
-    
-    let whitePieces = Magic.whitePiecesBitboards(bitboards: bitboards)
-    let blackPieces = Magic.blackPiecesBitboards(bitboards: bitboards)
-    let allPieces = whitePieces | blackPieces
-    
-    let blockerBitboard = allPieces & Bishop.masks[square] // & checkRayMask
-    
+func generateBishopMovesForQueen(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
+    let blockerBitboard = occupancy.all & Bishop.masks[square]
     var movesBitboard = Bishop.lookUpTable[square]![magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]!
     
     var pieceValue = 0
     if currentColor == .white {
-        movesBitboard = movesBitboard & ~whitePieces
+        movesBitboard = movesBitboard & ~occupancy.white
         pieceValue = Piece.ColoredPieces.whiteQueen.rawValue
     } else {
-        movesBitboard = movesBitboard & ~blackPieces
+        movesBitboard = movesBitboard & ~occupancy.black
         pieceValue = Piece.ColoredPieces.blackQueen.rawValue
-
     }
     
     while movesBitboard != 0 {
-        
         let targetSquare: Int = Bitboard.popLSB(&movesBitboard)
         moves.append(Move(fromSquare: square, targetSquare: targetSquare, pieceValue: pieceValue, captureValue: getPieceValueFromField(at: targetSquare, bitboards: bitboards)))
     }
 }
 
-
-func generateBishopAttacks(bitboards: [Int: Bitboard], square: Int, friendlyBitboard: Bitboard) -> Bitboard {
-    let whitePieces = Magic.whitePiecesBitboards(bitboards: bitboards)
-    let blackPieces = Magic.blackPiecesBitboards(bitboards: bitboards)
-    let allPieces = whitePieces | blackPieces
-    let blockerBitboard = allPieces & Bishop.masks[square]
+func generateBishopAttacks(square: Int, friendlyBitboard: Bitboard, occupancy: Occupancy) -> Bitboard {
+    let blockerBitboard = occupancy.all & Bishop.masks[square]
     var movesBitboard = Bishop.lookUpTable[square]![magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]!
     movesBitboard = movesBitboard & ~friendlyBitboard
     return movesBitboard
 }
 
-func generateQueenMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move]) {
+func generateQueenMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
     var queenMoves = [Move]()
-    generateRookMovesForQueen(bitboards: bitboards, currentColor: currentColor, square: square, moves: &queenMoves)
-    generateBishopMovesForQueen(bitboards: bitboards, currentColor: currentColor, square: square, moves: &queenMoves)
+    generateRookMovesForQueen(bitboards: bitboards, currentColor: currentColor, square: square, moves: &queenMoves, occupancy: occupancy)
+    generateBishopMovesForQueen(bitboards: bitboards, currentColor: currentColor, square: square, moves: &queenMoves, occupancy: occupancy)
     moves.append(contentsOf: queenMoves)
 }
 
-func generateQueenAttacks(bitboards: [Int: Bitboard], square: Int, friendlyBitboard: Bitboard) -> Bitboard {
-    return generateBishopAttacks(bitboards: bitboards, square: square, friendlyBitboard: friendlyBitboard) | generateRookAttacks(bitboards: bitboards, square: square, friendlyBitboard: friendlyBitboard)
+func generateQueenAttacks(square: Int, friendlyBitboard: Bitboard, occupancy: Occupancy) -> Bitboard {
+    return generateBishopAttacks(square: square, friendlyBitboard: friendlyBitboard, occupancy: occupancy)
+        | generateRookAttacks(square: square, friendlyBitboard: friendlyBitboard, occupancy: occupancy)
 }
