@@ -76,6 +76,9 @@ struct SearchTests {
         #expect(advertised.contains("Hash"))
         #expect(advertised.contains("Threads"))
         
+        options.set(name: "Hash", value: "64")
+        #expect(options.hashSizeMB == 64)
+        
         let threads = EngineUciOptions.advertised.first { $0.name == "Threads" }
         #expect(threads?.min == 1)
         #expect((threads?.max ?? 0) >= 4)

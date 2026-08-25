@@ -32,17 +32,20 @@ final class SearchContext {
     let timeLimit: TimeInterval?
     let isCancelled: () -> Bool
     let onInfo: ((String) -> Void)?
+    let tt: TranspositionTable
     private(set) var timedOut = false
     
     init(
         limits: SearchLimits,
         isCancelled: @escaping () -> Bool = { false },
-        onInfo: ((String) -> Void)? = nil
+        onInfo: ((String) -> Void)? = nil,
+        tt: TranspositionTable
     ) {
         startTime = Date().timeIntervalSince1970
         timeLimit = limits.allocatedTime
         self.isCancelled = isCancelled
         self.onInfo = onInfo
+        self.tt = tt
     }
     
     func shouldStop() -> Bool {
@@ -112,42 +115,109 @@ func alphabeta(game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: 
         return quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: maximizingPlayer, ply: ply, qsPly: 0, context: context)
     }
     
-    let moves = generateAllLegalMoves(boardState: game.boardState).sorted(by: >)
+    let originalAlpha = alpha
+    let originalBeta = beta
+    let key = game.boardState.zobristKey
+    var ttMove: Move? = nil
+    
+    if let hit = context.tt.probe(key) {
+        let score = TranspositionTable.scoreFromTT(hit.score, ply: ply)
+        ttMove = hit.move
+        if hit.depth >= depth {
+            switch hit.bound {
+            case .exact:
+                return score
+            case .lower:
+                if score >= beta { return score }
+                alpha = max(alpha, score)
+            case .upper:
+                if score <= alpha { return score }
+                beta = min(beta, score)
+            case .empty:
+                break
+            }
+            if alpha >= beta {
+                return score
+            }
+        }
+    }
+    
+    var moves = generateAllLegalMoves(boardState: game.boardState).sorted(by: >)
+    orderMoves(&moves, ttMove: ttMove)
     if let score = terminalScore(game: game, ply: ply, legalMoves: moves) {
+        context.tt.store(
+            key: key,
+            depth: depth,
+            score: TranspositionTable.scoreToTT(score, ply: ply),
+            bound: .exact,
+            move: nil
+        )
         return score
     }
     
+    var bestEval = maximizingPlayer ? Int.min : Int.max
+    var bestMove: Move? = nil
+    var interrupted = false
+    
     if maximizingPlayer {
-        var maxEval = Int.min
         for move in moves {
-            if context.shouldStop() { break }
+            if context.shouldStop() {
+                interrupted = true
+                break
+            }
             game.play(move)
             let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false, ply: ply + 1, context: context)
             game.unplay()
             
-            maxEval = max(maxEval, eval)
-            alpha = max(alpha, maxEval)
+            if eval > bestEval {
+                bestEval = eval
+                bestMove = move
+            }
+            alpha = max(alpha, bestEval)
             if beta <= alpha {
                 break
             }
         }
-        return maxEval
     } else {
-        var minEval = Int.max
         for move in moves {
-            if context.shouldStop() { break }
+            if context.shouldStop() {
+                interrupted = true
+                break
+            }
             game.play(move)
             let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true, ply: ply + 1, context: context)
             game.unplay()
             
-            minEval = min(minEval, eval)
-            beta = min(beta, minEval)
+            if eval < bestEval {
+                bestEval = eval
+                bestMove = move
+            }
+            beta = min(beta, bestEval)
             if beta <= alpha {
                 break
             }
         }
-        return minEval
     }
+    
+    if !interrupted && !context.timedOut {
+        let bound: TTBound
+        if bestEval <= originalAlpha {
+            bound = .upper
+        } else if bestEval >= originalBeta {
+            bound = .lower
+        } else {
+            bound = .exact
+        }
+        context.tt.store(
+            key: key,
+            depth: depth,
+            score: TranspositionTable.scoreToTT(bestEval, ply: ply),
+            bound: bound,
+            move: bestMove
+        )
+    }
+    
+    return bestEval
 }
 
 func quiesce(game: Game, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int, qsPly: Int, context: SearchContext) -> Int {
@@ -231,7 +301,8 @@ func findBestMove(
     limits: SearchLimits,
     maximizingPlayer: Bool,
     isCancelled: @escaping () -> Bool = { false },
-    onInfo: ((String) -> Void)? = nil
+    onInfo: ((String) -> Void)? = nil,
+    tt: TranspositionTable? = nil
 ) -> Move? {
     let rootMoves = game.boardState.currentValidMoves
     let searched = iterativeDeepening(
@@ -239,7 +310,8 @@ func findBestMove(
         limits: limits,
         maximizingPlayer: maximizingPlayer,
         isCancelled: isCancelled,
-        onInfo: onInfo
+        onInfo: onInfo,
+        tt: tt ?? TranspositionTable(megabytes: 1)
     )
     if let searched, rootMoves.contains(searched) {
         return searched
@@ -252,9 +324,10 @@ func iterativeDeepening(
     limits: SearchLimits,
     maximizingPlayer: Bool,
     isCancelled: @escaping () -> Bool,
-    onInfo: ((String) -> Void)?
+    onInfo: ((String) -> Void)?,
+    tt: TranspositionTable
 ) -> Move? {
-    let context = SearchContext(limits: limits, isCancelled: isCancelled, onInfo: onInfo)
+    let context = SearchContext(limits: limits, isCancelled: isCancelled, onInfo: onInfo, tt: tt)
     var bestMove: Move? = nil
     
     for depth in 1...limits.maxDepth {
@@ -276,7 +349,10 @@ func iterativeDeepening(
 }
 
 func performSearch(game: Game, depth: Int, maximizingPlayer: Bool, context: SearchContext) -> (Move?, Int) {
-    let legalMoves = game.boardState.currentValidMoves.sorted(by: >)
+    var legalMoves = game.boardState.currentValidMoves.sorted(by: >)
+    if let hit = context.tt.probe(game.boardState.zobristKey) {
+        orderMoves(&legalMoves, ttMove: hit.move)
+    }
     
     if legalMoves.isEmpty {
         return (nil, terminalScore(game: game, ply: 0) ?? 0)

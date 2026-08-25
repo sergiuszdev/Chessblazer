@@ -25,7 +25,6 @@
 		3103B6BC2D484A88000CCDFA /* GeneratorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B3F2CB848D40077E27A /* GeneratorUtils.swift */; };
 		3103B6BD2D484A88000CCDFA /* BoardPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 318129262C5440A0002F1E40 /* BoardPrinter.swift */; };
 		3103B6BE2D484A88000CCDFA /* BoardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B2B2CB83F7B0077E27A /* BoardState.swift */; };
-		31A0B01582D484A88000CCDF /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
 		3103B6BF2D484A88000CCDFA /* Pieces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3181291A2C51B3EC002F1E40 /* Pieces.swift */; };
 		3103B6C02D484A88000CCDFA /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B472CB89B780077E27A /* GameEngine.swift */; };
 		3103B6C12D484A88000CCDFA /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3181291E2C51B803002F1E40 /* Game.swift */; };
@@ -64,6 +63,9 @@
 		3181293F2C56DAA4002F1E40 /* Pieces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3181291A2C51B3EC002F1E40 /* Pieces.swift */; };
 		318129402C56DAA4002F1E40 /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3181291E2C51B803002F1E40 /* Game.swift */; };
 		318129432C56DAA4002F1E40 /* Move.swift in Sources */ = {isa = PBXBuildFile; fileRef = 318129242C530BB0002F1E40 /* Move.swift */; };
+		31A0B01582D484A88000CCDF /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
+		31A0B01592CB83F7B0077E27 /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
+		31A0B015A2C55B0C4002F1E4 /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
 		31AC3B692D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
 		31AC3B6A2D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
 		31AC3B6B2D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
@@ -76,10 +78,11 @@
 		31ADBF432C5C148300A97097 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ADBF422C5C148300A97097 /* BoardView.swift */; };
 		31ADBF452C5C14C800A97097 /* SquareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ADBF442C5C14C800A97097 /* SquareView.swift */; };
 		31ADBF472C5C50DC00A97097 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ADBF462C5C50DC00A97097 /* Settings.swift */; };
+		31B0111582D484A88000CCDF /* TranspositionTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B011157CB83F7B0077E27A /* TranspositionTable.swift */; };
+		31B0111592CB83F7B0077E27 /* TranspositionTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B011157CB83F7B0077E27A /* TranspositionTable.swift */; };
+		31B01115A2C55B0C4002F1E4 /* TranspositionTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B011157CB83F7B0077E27A /* TranspositionTable.swift */; };
 		31B10B2C2CB83F7B0077E27A /* BoardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B2B2CB83F7B0077E27A /* BoardState.swift */; };
 		31B10B2E2CB83F7B0077E27A /* BoardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B2B2CB83F7B0077E27A /* BoardState.swift */; };
-		31A0B01592CB83F7B0077E27 /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
-		31A0B015A2C55B0C4002F1E4 /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
 		31B10B302CB846C30077E27A /* KingMovesGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B2F2CB846C30077E27A /* KingMovesGenerator.swift */; };
 		31B10B312CB846C30077E27A /* KingMovesGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B2F2CB846C30077E27A /* KingMovesGenerator.swift */; };
 		31B10B392CB846E60077E27A /* SliderMovesGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B372CB846E60077E27A /* SliderMovesGenerator.swift */; };
@@ -137,13 +140,14 @@
 		318129352C55B0C5002F1E40 /* ChessblazerGUI.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ChessblazerGUI.entitlements; sourceTree = "<group>"; };
 		318129372C55B0C5002F1E40 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		319A81B72CC07AD500BDD48D /* showcase2.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = showcase2.gif; sourceTree = "<group>"; };
+		31A0B0157CB83F7B0077E27A /* Zobrist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zobrist.swift; sourceTree = "<group>"; };
 		31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotationParser.swift; sourceTree = "<group>"; };
 		31ADBF3E2C5BF63D00A97097 /* ChessPieceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPieceView.swift; sourceTree = "<group>"; };
 		31ADBF402C5BF68900A97097 /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		31ADBF422C5C148300A97097 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		31ADBF442C5C14C800A97097 /* SquareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareView.swift; sourceTree = "<group>"; };
 		31ADBF462C5C50DC00A97097 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
-		31A0B0157CB83F7B0077E27A /* Zobrist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zobrist.swift; sourceTree = "<group>"; };
+		31B011157CB83F7B0077E27A /* TranspositionTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranspositionTable.swift; sourceTree = "<group>"; };
 		31B10B2B2CB83F7B0077E27A /* BoardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardState.swift; sourceTree = "<group>"; };
 		31B10B2F2CB846C30077E27A /* KingMovesGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KingMovesGenerator.swift; sourceTree = "<group>"; };
 		31B10B372CB846E60077E27A /* SliderMovesGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderMovesGenerator.swift; sourceTree = "<group>"; };
@@ -276,6 +280,7 @@
 				318129262C5440A0002F1E40 /* BoardPrinter.swift */,
 				31B10B2B2CB83F7B0077E27A /* BoardState.swift */,
 				31A0B0157CB83F7B0077E27A /* Zobrist.swift */,
+				31B011157CB83F7B0077E27A /* TranspositionTable.swift */,
 				3181291A2C51B3EC002F1E40 /* Pieces.swift */,
 				31B10B472CB89B780077E27A /* GameEngine.swift */,
 				3181291E2C51B803002F1E40 /* Game.swift */,
@@ -484,6 +489,7 @@
 				3103B6BD2D484A88000CCDFA /* BoardPrinter.swift in Sources */,
 				3103B6BE2D484A88000CCDFA /* BoardState.swift in Sources */,
 				31A0B01582D484A88000CCDF /* Zobrist.swift in Sources */,
+				31B0111582D484A88000CCDF /* TranspositionTable.swift in Sources */,
 				3103B6BF2D484A88000CCDFA /* Pieces.swift in Sources */,
 				3103B6C02D484A88000CCDFA /* GameEngine.swift in Sources */,
 				3103B6C12D484A88000CCDFA /* Game.swift in Sources */,
@@ -509,6 +515,7 @@
 				318129212C5277FA002F1E40 /* Engine.swift in Sources */,
 				31B10B2C2CB83F7B0077E27A /* BoardState.swift in Sources */,
 				31A0B01592CB83F7B0077E27 /* Zobrist.swift in Sources */,
+				31B0111592CB83F7B0077E27 /* TranspositionTable.swift in Sources */,
 				31EF3B682C622DE300DF07A3 /* PieceSquareTables.swift in Sources */,
 				317F00902C584924000E4AD6 /* GenerateMoves.swift in Sources */,
 				318129132C51B369002F1E40 /* EngineApp.swift in Sources */,
@@ -533,6 +540,7 @@
 				31B10B4A2CB8A0AF0077E27A /* GameEngine.swift in Sources */,
 				31B10B2E2CB83F7B0077E27A /* BoardState.swift in Sources */,
 				31A0B015A2C55B0C4002F1E4 /* Zobrist.swift in Sources */,
+				31B01115A2C55B0C4002F1E4 /* TranspositionTable.swift in Sources */,
 				3147A5F32C8915F9007E132F /* PawnMovesGenerator.swift in Sources */,
 				310C84912C6C029400E5566A /* Evaluation.swift in Sources */,
 				31AC3B6B2D4A7C9A0018BE3E /* NotationParser.swift in Sources */,

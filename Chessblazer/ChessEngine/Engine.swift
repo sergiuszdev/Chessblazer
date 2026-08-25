@@ -15,6 +15,7 @@ final class Engine: @unchecked Sendable {
     
     var game = Game()
     private var uciOptions = EngineUciOptions()
+    private let transpositionTable = TranspositionTable(megabytes: 16)
     
     private let outputLock = NSLock()
     private let flagLock = NSLock()
@@ -42,6 +43,7 @@ final class Engine: @unchecked Sendable {
             }
         case .ucinewgame:
             haltSearch()
+            transpositionTable.clear()
             game.startNewGame()
             
         case .position:
@@ -97,12 +99,14 @@ final class Engine: @unchecked Sendable {
         searchGroup.enter()
         searchQueue.async {
             defer { self.searchGroup.leave() }
+            self.transpositionTable.resize(megabytes: self.uciOptions.hashSizeMB)
             let move = findBestMove(
                 game: self.game,
                 limits: limits,
                 maximizingPlayer: maximizingPlayer,
                 isCancelled: { self.isStopRequested() },
-                onInfo: { self.sendOutput(output: $0) }
+                onInfo: { self.sendOutput(output: $0) },
+                tt: self.transpositionTable
             )
             let chosen: Move?
             if let move, rootMoves.contains(move) {
