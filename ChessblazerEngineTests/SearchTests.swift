@@ -1,0 +1,86 @@
+import Testing
+
+@Suite("Search")
+struct SearchTests {
+    @Test func goParsesExplicitLimits() {
+        let go = UciGoInput.parse(from: "go depth 8 movetime 1500 wtime 300000 btime 300000")
+        #expect(go.depth == 8)
+        #expect(go.searchMoveTime == 1500)
+        #expect(go.whiteTime == 300000)
+        #expect(go.blackTime == 300000)
+        
+        let fromMovetime = SearchLimits.from(go: go, sideToMove: .white)
+        #expect(fromMovetime.maxDepth == 8)
+        #expect(fromMovetime.allocatedTime == 1.5)
+    }
+    
+    @Test func goDepthOnlyHasNoTimeCap() {
+        let go = UciGoInput.parse(from: "go depth 4")
+        let limits = SearchLimits.from(go: go, sideToMove: .white)
+        #expect(limits.maxDepth == 4)
+        #expect(limits.allocatedTime == nil)
+    }
+    
+    @Test func mateInOne() {
+        let game = Game()
+        game.loadFromFen(fen: "6k1/8/6K1/8/8/8/8/4R3 w - - 0 1")
+        let move = findBestMove(game: game, depth: 1, maximizingPlayer: true)
+        #expect(moveToNotation(move: move!) == "e1e8")
+    }
+    
+    @Test func stalemateIsDraw() {
+        let game = Game()
+        game.loadFromFen(fen: "k7/8/1Q6/8/8/8/8/K7 b - - 0 1")
+        #expect(game.boardState.currentValidMoves.isEmpty)
+        #expect(terminalScore(game: game, ply: 0) == 0)
+    }
+    
+    @Test func promotionUsesUciPieceLetter() {
+        let game = Game()
+        game.loadFromFen(fen: "8/P5k1/8/8/8/8/8/K7 w - - 0 1")
+        let queen = game.findMove(notation: "a7a8q")
+        let knight = game.findMove(notation: "a7a8n")
+        #expect(queen != nil)
+        #expect(knight != nil)
+        #expect(moveToNotation(move: queen!) == "a7a8q")
+        #expect(moveToNotation(move: knight!) == "a7a8n")
+        #expect(Piece.getType(piece: queen!.promotionPiece) == .queen)
+        #expect(Piece.getType(piece: knight!.promotionPiece) == .knight)
+        #expect(game.findMove(notation: "a7a8") != nil)
+        #expect(game.findMove(notation: "e2e4") == nil)
+    }
+    
+    @Test func cancelledSearchStillReturnsALegalMove() {
+        let game = Game()
+        let move = findBestMove(
+            game: game,
+            limits: SearchLimits(maxDepth: 20, allocatedTime: nil),
+            maximizingPlayer: true,
+            isCancelled: { true }
+        )
+        #expect(move != nil)
+        #expect(game.boardState.currentValidMoves.contains(move!))
+    }
+    
+    @Test func setOptionParsesSpacedNames() {
+        let parsed = parseUciSetOption(args: ["setoption", "name", "Move", "Overhead", "value", "2000"])
+        #expect(parsed?.name == "Move Overhead")
+        #expect(parsed?.value == "2000")
+        
+        var options = EngineUciOptions()
+        options.set(name: parsed!.name, value: parsed!.value)
+        #expect(options.moveOverheadMs == 2000)
+        
+        let advertised = EngineUciOptions.advertised.map(\.name)
+        #expect(advertised.contains("Move Overhead"))
+        #expect(advertised.contains("Hash"))
+        #expect(advertised.contains("Threads"))
+    }
+    
+    @Test func clockSearchSubtractsMoveOverhead() {
+        let go = UciGoInput.parse(from: "go wtime 60000 btime 60000")
+        let limits = SearchLimits.from(go: go, sideToMove: .white, moveOverheadMs: 2000)
+        #expect(limits.allocatedTime != nil)
+        #expect(limits.allocatedTime! < 30.0)
+    }
+}

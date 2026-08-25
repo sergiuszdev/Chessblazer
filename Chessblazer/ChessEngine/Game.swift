@@ -49,12 +49,13 @@ class Game {
         
         
         if boardState.currentValidMoves.isEmpty {
+            boardData.hasGameEnded = true
             if isWhiteKingChecked(boardState: boardState) {
                 boardData.gameResult = .black
             } else if isBlackKingChecked(boardState: boardState) {
                 boardData.gameResult = .white
             } else {
-                boardData.gameResult = .none
+                boardData.gameResult = .draw
             }
         }
     }
@@ -74,11 +75,15 @@ class Game {
         }
     }
     
-    func findMove(notation: String) -> Move {
-        let move = Move(notation: notation)
-        return boardState.currentValidMoves.first(where: {
-            $0.fromSquare == move.fromSquare && $0.targetSquare == move.targetSquare
-        })!
+    func findMove(notation: String) -> Move? {
+        let parsed = Move(notation: notation)
+        guard parsed.fromSquare != nil, parsed.targetSquare != nil else { return nil }
+        return boardState.currentValidMoves.first { legal in
+            legal.fromSquare == parsed.fromSquare
+            && legal.targetSquare == parsed.targetSquare
+            && (parsed.promotionPiece == 0
+                || Piece.getType(piece: parsed.promotionPiece) == Piece.getType(piece: legal.promotionPiece))
+        }
     }
     
     

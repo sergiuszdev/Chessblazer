@@ -40,6 +40,21 @@ func translateFromNotationToSquare(_ notation: String) -> Int? {
     return 8 * rankIndex + fileIndex
 }
 
+func uciPromotionLetter(piece: Int) -> String? {
+    switch Piece.getType(piece: piece) {
+    case .queen: return "q"
+    case .rook: return "r"
+    case .bishop: return "b"
+    case .knight: return "n"
+    default: return nil
+    }
+}
+
 func moveToNotation(move: Move) -> String {
-    return "\(squareToNotation(square: move.fromSquare!))\(squareToNotation(square: move.targetSquare!))"
+    guard let from = move.fromSquare, let to = move.targetSquare else { return "0000" }
+    var notation = "\(squareToNotation(square: from))\(squareToNotation(square: to))"
+    if move.promotionPiece != 0, let letter = uciPromotionLetter(piece: move.promotionPiece) {
+        notation += letter
+    }
+    return notation
 }

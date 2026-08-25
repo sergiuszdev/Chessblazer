@@ -11,18 +11,32 @@
 		</dict>
 		<key>ChessblazerEngineTests.xcscheme_^#shared#^_</key>
 		<dict>
+			<key>isShown</key>
+			<false/>
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
 		<key>ChessblazerGUI.xcscheme_^#shared#^_</key>
 		<dict>
+			<key>isShown</key>
+			<false/>
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>3103B6A32D4849B3000CCDFA</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>3181290E2C51B369002F1E40</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3181292C2C55B0C4002F1E40</key>
 		<dict>
 			<key>primary</key>
 			<true/>
