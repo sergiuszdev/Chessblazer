@@ -86,6 +86,7 @@ struct UndoInfo {
     var occupancy: Occupancy
     var attackBitboard: Bitboard
     var enPassant: String
+    var zobristKey: UInt64
     var currentValidMoves: [Move]?
 }
 
@@ -98,10 +99,66 @@ struct BoardState {
     var currentTurnColor: Piece.Color
     var bitboards = PieceBitboards()
     var enPassant = "-"
+    var zobristKey: UInt64 = 0
     var currentValidMoves: [Move] = [Move]()
     
     mutating func refreshOccupancy() {
         occupancy = bitboards.occupancy()
+    }
+    
+    mutating func refreshZobristKey() {
+        zobristKey = Zobrist.compute(self)
+    }
+    
+    func enPassantHashFile() -> Int? {
+        if let move = lastMove, let from = move.fromSquare, let target = move.targetSquare {
+            if move.pieceValue == Piece.ColoredPieces.whitePawn.rawValue
+                && (8...15).contains(from) && (24...31).contains(target) {
+                return target % 8
+            }
+            if move.pieceValue == Piece.ColoredPieces.blackPawn.rawValue
+                && (48...55).contains(from) && (32...39).contains(target) {
+                return target % 8
+            }
+            return nil
+        }
+        if enPassant != "-", let square = translateFromNotationToSquare(enPassant) {
+            return square % 8
+        }
+        return nil
+    }
+    
+    mutating func xorPiece(_ piece: Int, square: Int) {
+        zobristKey ^= Zobrist.pieceKey(piece: piece, square: square)
+    }
+    
+    mutating func xorMovePieces(_ move: Move) {
+        let from = move.fromSquare!
+        let target = move.targetSquare!
+        let pieceValue = move.pieceValue
+        
+        if move.castling {
+            xorPiece(pieceValue, square: from)
+            xorPiece(pieceValue, square: move.castlingKingDestination)
+            xorPiece(move.captureValue, square: move.castlingRookOrigin)
+            xorPiece(move.captureValue, square: move.castlingRookDestination)
+        } else if move.promotionPiece != 0 {
+            xorPiece(pieceValue, square: from)
+            if move.captureValue != 0 {
+                xorPiece(move.captureValue, square: target)
+            }
+            xorPiece(move.promotionPiece, square: target)
+        } else if move.enPasssantCapture != 0 {
+            xorPiece(pieceValue, square: from)
+            xorPiece(pieceValue, square: target)
+            xorPiece(move.captureValue, square: move.enPasssantCapture)
+        } else {
+            xorPiece(pieceValue, square: from)
+            xorPiece(pieceValue, square: target)
+            if move.captureValue != 0 {
+                xorPiece(move.captureValue, square: target)
+            }
+        }
     }
     
     mutating func applyBitboards(_ move: Move) {
@@ -191,9 +248,28 @@ struct BoardState {
         default:
             break
         }
+        
+        switch move.captureValue {
+        case Piece.ColoredPieces.whiteRook.rawValue:
+            if move.targetSquare == 0 {
+                castlesAvailable.remove("Q")
+            } else if move.targetSquare == 7 {
+                castlesAvailable.remove("K")
+            }
+        case Piece.ColoredPieces.blackRook.rawValue:
+            if move.targetSquare == 56 {
+                castlesAvailable.remove("q")
+            } else if move.targetSquare == 63 {
+                castlesAvailable.remove("k")
+            }
+        default:
+            break
+        }
     }
     
     mutating func play(_ move: Move, snapshotLegalMoves: Bool) {
+        let previousCastles = castlesAvailable
+        let previousEpFile = enPassantHashFile()
         undoStack.append(
             UndoInfo(
                 move: move,
@@ -203,12 +279,14 @@ struct BoardState {
                 occupancy: occupancy,
                 attackBitboard: attackBitboard,
                 enPassant: enPassant,
+                zobristKey: zobristKey,
                 currentValidMoves: snapshotLegalMoves ? currentValidMoves : nil
             )
         )
         applyBitboards(move)
         updateCastleRights(for: move)
         lastMove = move
+        enPassant = "-"
         currentTurnColor = currentTurnColor.getOppositeColor()
         refreshOccupancy()
         attackBitboard = generateAllAttackedSquares(
@@ -216,6 +294,12 @@ struct BoardState {
             currentColor: currentTurnColor,
             occupancy: occupancy
         )
+        xorMovePieces(move)
+        zobristKey ^= Zobrist.castleKey(previousCastles)
+        zobristKey ^= Zobrist.castleKey(castlesAvailable)
+        zobristKey ^= Zobrist.blackToMove
+        zobristKey ^= Zobrist.enPassantKey(previousEpFile)
+        zobristKey ^= Zobrist.enPassantKey(enPassantHashFile())
     }
     
     mutating func unplay() {
@@ -227,6 +311,7 @@ struct BoardState {
         occupancy = undo.occupancy
         attackBitboard = undo.attackBitboard
         enPassant = undo.enPassant
+        zobristKey = undo.zobristKey
         if let moves = undo.currentValidMoves {
             currentValidMoves = moves
         }

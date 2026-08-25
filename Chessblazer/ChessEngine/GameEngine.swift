@@ -55,6 +55,7 @@ class GameEngine {
         }
         
         boardState.refreshOccupancy()
+        boardState.refreshZobristKey()
         return boardState
     }
 }
