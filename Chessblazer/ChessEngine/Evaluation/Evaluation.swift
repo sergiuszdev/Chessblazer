@@ -94,8 +94,8 @@ final class SearchContext {
     }
 }
 
-func countMaterial(bitboards: PieceBitboards) -> Int {
-    let phase = GamePhase.of(bitboards)
+func countMaterial(bitboards: PieceBitboards, phase: Int? = nil) -> Int {
+    let phase = phase ?? GamePhase.of(bitboards)
     var whiteSum = 0
     var blackSum = 0
     bitboards.forEachOccupied { piece, bitboard in
@@ -115,7 +115,204 @@ func countMaterial(bitboards: PieceBitboards) -> Int {
 }
 
 func evaluate(bitboards: PieceBitboards) -> Int {
-    return countMaterial(bitboards: bitboards)
+    let occupancy = Occupancy.from(bitboards: bitboards)
+    let phase = GamePhase.of(bitboards)
+    return countMaterial(bitboards: bitboards, phase: phase)
+        + evaluatePawnStructure(bitboards: bitboards, phase: phase)
+        + evaluateMobility(bitboards: bitboards, occupancy: occupancy, phase: phase)
+        + evaluateKingSafety(bitboards: bitboards, occupancy: occupancy, phase: phase)
+}
+
+private enum EvalMasks {
+    static let files: [Bitboard] = (0..<8).map { Bitboard.Masks.fileA << $0 }
+    static let adjacentFiles: [Bitboard] = (0..<8).map { file in
+        var mask: Bitboard = 0
+        if file > 0 { mask |= files[file - 1] }
+        if file < 7 { mask |= files[file + 1] }
+        return mask
+    }
+    static let whitePassed: [Bitboard] = (0..<64).map { whiteFrontSpan(square: $0) }
+    static let blackPassed: [Bitboard] = (0..<64).map { blackFrontSpan(square: $0) }
+    static let whiteShield: [Bitboard] = (0..<64).map { kingShield(square: $0, white: true) }
+    static let blackShield: [Bitboard] = (0..<64).map { kingShield(square: $0, white: false) }
+    
+    private static func whiteFrontSpan(square: Int) -> Bitboard {
+        let file = square % 8
+        let rank = square / 8
+        var mask: Bitboard = 0
+        guard rank < 7 else { return 0 }
+        for nextRank in (rank + 1)...7 {
+            for delta in -1...1 {
+                let nextFile = file + delta
+                if (0..<8).contains(nextFile) {
+                    mask |= Bitboard(1) << Bitboard(nextRank * 8 + nextFile)
+                }
+            }
+        }
+        return mask
+    }
+    
+    private static func blackFrontSpan(square: Int) -> Bitboard {
+        let file = square % 8
+        let rank = square / 8
+        var mask: Bitboard = 0
+        guard rank > 0 else { return 0 }
+        for nextRank in 0..<rank {
+            for delta in -1...1 {
+                let nextFile = file + delta
+                if (0..<8).contains(nextFile) {
+                    mask |= Bitboard(1) << Bitboard(nextRank * 8 + nextFile)
+                }
+            }
+        }
+        return mask
+    }
+    
+    private static func kingShield(square: Int, white: Bool) -> Bitboard {
+        let file = square % 8
+        let rank = square / 8
+        var mask: Bitboard = 0
+        let ranks = white ? [rank + 1, rank + 2] : [rank - 1, rank - 2]
+        for nextRank in ranks where (0...7).contains(nextRank) {
+            for nextFile in (file - 1)...(file + 1) where (0...7).contains(nextFile) {
+                mask |= Bitboard(1) << Bitboard(nextRank * 8 + nextFile)
+            }
+        }
+        return mask
+    }
+}
+
+private let doubledPawnPenalty = 16
+private let isolatedPawnPenalty = 12
+
+func evaluatePawnStructure(bitboards: PieceBitboards, phase: Int) -> Int {
+    let whitePawns = bitboards[Piece.ColoredPieces.whitePawn.rawValue]
+    let blackPawns = bitboards[Piece.ColoredPieces.blackPawn.rawValue]
+    let white = pawnStructureScore(pawns: whitePawns, enemy: blackPawns, passedMasks: EvalMasks.whitePassed)
+    let black = pawnStructureScore(pawns: blackPawns, enemy: whitePawns, passedMasks: EvalMasks.blackPassed)
+    return GamePhase.interpolate(
+        middlegame: white.mg - black.mg,
+        endgame: white.eg - black.eg,
+        phase: phase
+    )
+}
+
+private func pawnStructureScore(pawns: Bitboard, enemy: Bitboard, passedMasks: [Bitboard]) -> (mg: Int, eg: Int) {
+    var mg = 0
+    var eg = 0
+    var remaining = pawns
+    while remaining != 0 {
+        let square = Bitboard.popLSB(&remaining)
+        let file = square % 8
+        if pawns & EvalMasks.adjacentFiles[file] == 0 {
+            mg -= isolatedPawnPenalty
+            eg -= isolatedPawnPenalty
+        }
+        if enemy & passedMasks[square] == 0 {
+            mg += 18
+            eg += 40
+        }
+    }
+    for file in 0..<8 {
+        let extra = Int((pawns & EvalMasks.files[file]).nonzeroBitCount) - 1
+        if extra > 0 {
+            mg -= extra * doubledPawnPenalty
+            eg -= extra * doubledPawnPenalty
+        }
+    }
+    return (mg, eg)
+}
+
+func evaluateMobility(bitboards: PieceBitboards, occupancy: Occupancy, phase: Int) -> Int {
+    let white = mobilityScore(bitboards: bitboards, occupancy: occupancy, color: .white)
+    let black = mobilityScore(bitboards: bitboards, occupancy: occupancy, color: .black)
+    return GamePhase.interpolate(
+        middlegame: white.mg - black.mg,
+        endgame: white.eg - black.eg,
+        phase: phase
+    )
+}
+
+private func mobilityScore(bitboards: PieceBitboards, occupancy: Occupancy, color: Piece.Color) -> (mg: Int, eg: Int) {
+    let friendly = occupancy.friendly(for: color)
+    var mg = 0
+    var eg = 0
+    
+    func add(_ board: Bitboard, mgUnit: Int, egUnit: Int, attacks: (Int) -> Bitboard) {
+        var remaining = board
+        while remaining != 0 {
+            let square = Bitboard.popLSB(&remaining)
+            let count = attacks(square).nonzeroBitCount
+            mg += mgUnit * count
+            eg += egUnit * count
+        }
+    }
+    
+    let knight = color == .white ? Piece.ColoredPieces.whiteKnight.rawValue : Piece.ColoredPieces.blackKnight.rawValue
+    let bishop = color == .white ? Piece.ColoredPieces.whiteBishop.rawValue : Piece.ColoredPieces.blackBishop.rawValue
+    let rook = color == .white ? Piece.ColoredPieces.whiteRook.rawValue : Piece.ColoredPieces.blackRook.rawValue
+    let queen = color == .white ? Piece.ColoredPieces.whiteQueen.rawValue : Piece.ColoredPieces.blackQueen.rawValue
+    
+    add(bitboards[knight], mgUnit: 4, egUnit: 3) { generateKnightAttacks(square: $0, friendlyBitboard: friendly) }
+    add(bitboards[bishop], mgUnit: 3, egUnit: 3) { generateBishopAttacks(square: $0, friendlyBitboard: friendly, occupancy: occupancy) }
+    add(bitboards[rook], mgUnit: 2, egUnit: 3) { generateRookAttacks(square: $0, friendlyBitboard: friendly, occupancy: occupancy) }
+    add(bitboards[queen], mgUnit: 1, egUnit: 1) { generateQueenAttacks(square: $0, friendlyBitboard: friendly, occupancy: occupancy) }
+    return (mg, eg)
+}
+
+func evaluateKingSafety(bitboards: PieceBitboards, occupancy: Occupancy, phase: Int) -> Int {
+    let white = kingSafetyPenalty(bitboards: bitboards, occupancy: occupancy, color: .white)
+    let black = kingSafetyPenalty(bitboards: bitboards, occupancy: occupancy, color: .black)
+    return GamePhase.interpolate(middlegame: black - white, endgame: 0, phase: phase)
+}
+
+private func kingSafetyPenalty(bitboards: PieceBitboards, occupancy: Occupancy, color: Piece.Color) -> Int {
+    let kingPiece = color == .white ? Piece.ColoredPieces.whiteKing.rawValue : Piece.ColoredPieces.blackKing.rawValue
+    var kingBoard = bitboards[kingPiece]
+    guard kingBoard != 0 else { return 0 }
+    let kingSquare = Bitboard.popLSB(&kingBoard)
+    let kingBB = Bitboard(1) << Bitboard(kingSquare)
+    let zone = generateKingAttacks(king: kingBB) | kingBB
+    
+    let pawns = color == .white
+        ? bitboards[Piece.ColoredPieces.whitePawn.rawValue]
+        : bitboards[Piece.ColoredPieces.blackPawn.rawValue]
+    let shield = color == .white ? EvalMasks.whiteShield[kingSquare] : EvalMasks.blackShield[kingSquare]
+    let missingShield = max(0, 3 - Int((pawns & shield).nonzeroBitCount))
+    
+    let enemy = color.getOppositeColor()
+    var attackUnits = 0
+    let enemyPawns = enemy == .white
+        ? bitboards[Piece.ColoredPieces.whitePawn.rawValue]
+        : bitboards[Piece.ColoredPieces.blackPawn.rawValue]
+    let pawnAttacks = enemy == .white
+        ? generateWhitePawnAttacks(whitePawns: enemyPawns)
+        : generateBlackPawnAttacks(blackPawns: enemyPawns)
+    attackUnits += (pawnAttacks & zone).nonzeroBitCount
+    
+    func addAttackers(_ board: Bitboard, weight: Int, attacks: (Int) -> Bitboard) {
+        var remaining = board
+        while remaining != 0 {
+            let square = Bitboard.popLSB(&remaining)
+            if attacks(square) & zone != 0 {
+                attackUnits += weight
+            }
+        }
+    }
+    
+    let enemyFriendly = occupancy.friendly(for: enemy)
+    let knight = enemy == .white ? Piece.ColoredPieces.whiteKnight.rawValue : Piece.ColoredPieces.blackKnight.rawValue
+    let bishop = enemy == .white ? Piece.ColoredPieces.whiteBishop.rawValue : Piece.ColoredPieces.blackBishop.rawValue
+    let rook = enemy == .white ? Piece.ColoredPieces.whiteRook.rawValue : Piece.ColoredPieces.blackRook.rawValue
+    let queen = enemy == .white ? Piece.ColoredPieces.whiteQueen.rawValue : Piece.ColoredPieces.blackQueen.rawValue
+    
+    addAttackers(bitboards[knight], weight: 2) { generateKnightAttacks(square: $0, friendlyBitboard: enemyFriendly) }
+    addAttackers(bitboards[bishop], weight: 2) { generateBishopAttacks(square: $0, friendlyBitboard: enemyFriendly, occupancy: occupancy) }
+    addAttackers(bitboards[rook], weight: 3) { generateRookAttacks(square: $0, friendlyBitboard: enemyFriendly, occupancy: occupancy) }
+    addAttackers(bitboards[queen], weight: 5) { generateQueenAttacks(square: $0, friendlyBitboard: enemyFriendly, occupancy: occupancy) }
+    
+    let capped = min(attackUnits, 12)
+    return missingShield * 14 + capped * capped
 }
 
 func terminalScore(game: Game, ply: Int, legalMoves: [Move]? = nil) -> Int? {
