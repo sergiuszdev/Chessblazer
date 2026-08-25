@@ -156,6 +156,10 @@ struct EngineUciOptions {
     var moveOverheadMs: Int {
         max(Int(values["move overhead"] ?? "") ?? 10, 0)
     }
+    
+    var hashSizeMB: Int {
+        min(max(Int(values["hash"] ?? "") ?? 16, 1), 4096)
+    }
 }
 
 func parseUciSetOption(args: [String]) -> (name: String, value: String)? {

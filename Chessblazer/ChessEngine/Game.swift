@@ -42,6 +42,10 @@ class Game {
         boardState.play(move, snapshotLegalMoves: false)
     }
     
+    func playNull() {
+        boardState.playNull()
+    }
+    
     func unplay() {
         boardState.unplay()
     }
