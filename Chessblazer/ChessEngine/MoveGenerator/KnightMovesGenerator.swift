@@ -8,17 +8,14 @@
 import Foundation
 
 
-func generateKnightMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move]) {
-    var friendlyMask = Bitboard(0)
+func generateKnightMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
     var knightBitboard = Bitboard(1) << Bitboard(square)
     var pieceValue = 0
+    let friendlyMask = occupancy.friendly(for: currentColor)
     if currentColor == .white {
-        friendlyMask = Magic.whitePiecesBitboards(bitboards: bitboards)
         pieceValue = Piece.ColoredPieces.whiteKnight.rawValue
     } else {
-        friendlyMask = Magic.blackPiecesBitboards(bitboards: bitboards)
         pieceValue = Piece.ColoredPieces.blackKnight.rawValue
-
     }
     
     while knightBitboard != 0 {

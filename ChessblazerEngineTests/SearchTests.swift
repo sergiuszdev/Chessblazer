@@ -82,6 +82,54 @@ struct SearchTests {
         #expect(threads?.advertisement.contains("max 256") == true)
     }
     
+    @Test func castleUsesUciKingDestination() {
+        let game = Game()
+        game.loadFromFen(fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -")
+        let whiteKingSide = game.findMove(notation: "e1g1")
+        let whiteQueenSide = game.findMove(notation: "e1c1")
+        #expect(whiteKingSide != nil)
+        #expect(whiteQueenSide != nil)
+        #expect(whiteKingSide?.castling == true)
+        #expect(moveToNotation(move: whiteKingSide!) == "e1g1")
+        #expect(moveToNotation(move: whiteQueenSide!) == "e1c1")
+        #expect(game.findMove(notation: "e1h1") == nil)
+        
+        game.makeMove(move: whiteKingSide!)
+        game.loadFromFen(fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq -")
+        let blackKingSide = game.findMove(notation: "e8g8")
+        let blackQueenSide = game.findMove(notation: "e8c8")
+        #expect(blackKingSide != nil)
+        #expect(blackQueenSide != nil)
+        #expect(moveToNotation(move: blackKingSide!) == "e8g8")
+        #expect(moveToNotation(move: blackQueenSide!) == "e8c8")
+    }
+    
+    @Test func lichessGameAppliesBlackCastling() {
+        let game = Game()
+        let uciMoves = [
+            "b1c3", "c7c6", "g1f3", "d7d6", "e2e4", "d6d5", "e4e5", "c8g4",
+            "a2a4", "b8d7", "d2d3", "g4f3", "g2f3", "e7e6", "e1e2", "d8c7",
+            "b2b4", "f8b4", "c1b2", "d7e5", "f1g2", "e5d7", "c3d5", "c7a5",
+            "d5b4", "a5g5", "h1g1", "g8f6", "a1c1", "e8g8"
+        ]
+        for notation in uciMoves {
+            let move = game.findMove(notation: notation)
+            #expect(move != nil, "engine must accept \(notation)")
+            if let move {
+                game.makeMove(move: move)
+            }
+        }
+        
+        #expect(game.boardState.currentTurnColor == .white)
+        let legal = Set(game.boardState.currentValidMoves.map(moveToNotation))
+        #expect(!legal.contains("a8b8"))
+        #expect(game.findMove(notation: "a8b8") == nil)
+        
+        let best = findBestMove(game: game, depth: 1, maximizingPlayer: true)
+        #expect(best != nil)
+        #expect(legal.contains(moveToNotation(move: best!)))
+    }
+    
     @Test func clockSearchSubtractsMoveOverhead() {
         let go = UciGoInput.parse(from: "go wtime 60000 btime 60000")
         let limits = SearchLimits.from(go: go, sideToMove: .white, moveOverheadMs: 2000)

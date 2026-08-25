@@ -93,6 +93,7 @@ final class Engine: @unchecked Sendable {
     private func startSearch(limits: SearchLimits) {
         setStopSearch(false)
         let maximizingPlayer = game.boardState.currentTurnColor == .white
+        let rootMoves = game.boardState.currentValidMoves
         searchGroup.enter()
         searchQueue.async {
             defer { self.searchGroup.leave() }
@@ -103,7 +104,12 @@ final class Engine: @unchecked Sendable {
                 isCancelled: { self.isStopRequested() },
                 onInfo: { self.sendOutput(output: $0) }
             )
-            let chosen = move ?? self.game.boardState.currentValidMoves.first
+            let chosen: Move?
+            if let move, rootMoves.contains(move) {
+                chosen = move
+            } else {
+                chosen = rootMoves.first
+            }
             if let chosen {
                 self.sendOutput(output: "bestmove \(moveToNotation(move: chosen))")
             } else {

@@ -20,7 +20,7 @@ class GameEngine {
         
         if move.castling {
             boardStateCopy.bitboards = GameEngine.makeMoveOperations(bitboards: boardStateCopy.bitboards, pieceValue: pieceValue, from: from, target: move.castlingKingDestination)
-            boardStateCopy.bitboards = GameEngine.makeMoveOperations(bitboards: boardStateCopy.bitboards, pieceValue: move.captureValue, from: target, target: move.castlingRookDestination)
+            boardStateCopy.bitboards = GameEngine.makeMoveOperations(bitboards: boardStateCopy.bitboards, pieceValue: move.captureValue, from: move.castlingRookOrigin, target: move.castlingRookDestination)
             
             if pieceValue == Piece.ColoredPieces.whiteKing.rawValue {
                 boardStateCopy.castlesAvailable.remove("K")
@@ -99,7 +99,7 @@ class GameEngine {
         if move.castling {
             
             boardStateCopy.bitboards = GameEngine.makeMoveOperations(bitboards: boardStateCopy.bitboards, pieceValue: pieceValue, from: from, target: move.castlingKingDestination)
-            boardStateCopy.bitboards = GameEngine.makeMoveOperations(bitboards: boardStateCopy.bitboards, pieceValue: move.captureValue, from: target, target: move.castlingRookDestination)
+            boardStateCopy.bitboards = GameEngine.makeMoveOperations(bitboards: boardStateCopy.bitboards, pieceValue: move.captureValue, from: move.castlingRookOrigin, target: move.castlingRookDestination)
             
             if pieceValue == Piece.ColoredPieces.whiteKing.rawValue {
                 boardStateCopy.castlesAvailable.remove("K")
@@ -160,7 +160,8 @@ class GameEngine {
                 break
             }
         }
-        boardStateCopy.attackBitboard = generateAllAttackedSquares(bitboards: boardStateCopy.bitboards, currentColor: boardStateCopy.currentTurnColor)
+        boardStateCopy.refreshOccupancy()
+        boardStateCopy.attackBitboard = generateAllAttackedSquares(bitboards: boardStateCopy.bitboards, currentColor: boardStateCopy.currentTurnColor, occupancy: boardStateCopy.occupancy)
         return boardStateCopy
     }
 
@@ -213,6 +214,7 @@ class GameEngine {
             }
         }
         
+        boardState.refreshOccupancy()
         return boardState
     }
 }

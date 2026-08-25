@@ -7,8 +7,36 @@
 
 import Foundation
 
+struct Occupancy: Equatable {
+    var white: Bitboard = 0
+    var black: Bitboard = 0
+    
+    var all: Bitboard { white | black }
+    
+    func friendly(for color: Piece.Color) -> Bitboard {
+        color == .white ? white : black
+    }
+    
+    func enemy(for color: Piece.Color) -> Bitboard {
+        color == .white ? black : white
+    }
+    
+    static func from(bitboards: [Int: Bitboard]) -> Occupancy {
+        var occupancy = Occupancy()
+        for (piece, board) in bitboards {
+            if Piece.checkColor(piece: piece) == .white {
+                occupancy.white |= board
+            } else {
+                occupancy.black |= board
+            }
+        }
+        return occupancy
+    }
+}
+
 struct BoardState {
     var attackBitboard = Bitboard(0)
+    var occupancy = Occupancy()
     var performedMovesList = [MoveData]()
     var castlesAvailable: Set<Character> = []
     var currentTurnColor: Piece.Color // = .white
@@ -16,6 +44,9 @@ struct BoardState {
     var enPassant = "-"
     var currentValidMoves: [Move] = [Move]()
     
+    mutating func refreshOccupancy() {
+        occupancy = Occupancy.from(bitboards: bitboards)
+    }
 }
 
 func initBitboards() -> [Int: Bitboard] {

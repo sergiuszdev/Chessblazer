@@ -231,6 +231,7 @@ func findBestMove(
     isCancelled: @escaping () -> Bool = { false },
     onInfo: ((String) -> Void)? = nil
 ) -> Move? {
+    let rootMoves = game.boardState.currentValidMoves
     let searched = iterativeDeepening(
         game: game,
         limits: limits,
@@ -238,7 +239,10 @@ func findBestMove(
         isCancelled: isCancelled,
         onInfo: onInfo
     )
-    return searched ?? game.boardState.currentValidMoves.first
+    if let searched, rootMoves.contains(searched) {
+        return searched
+    }
+    return rootMoves.first
 }
 
 func iterativeDeepening(

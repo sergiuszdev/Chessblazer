@@ -10,13 +10,16 @@ import Foundation
 func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], lastMove: Move?, castlesAvailable: Set<Character>) {
     
     moves.removeAll()
-    
+    let occupancy = Occupancy.from(bitboards: bitboards)
+    let attackedSquares = generateAllAttackedSquares(bitboards: bitboards, currentColor: currentColor, occupancy: occupancy)
     
     if let lastMove = lastMove {
-        moves.append(contentsOf: enPassantCheck(bitboards: bitboards, lastMove: lastMove))
+        let enPassantMoves = enPassantCheck(bitboards: bitboards, lastMove: lastMove)
+            .filter { Piece.checkColor(piece: $0.pieceValue) == currentColor }
+        moves.append(contentsOf: enPassantMoves)
     }
     
-    
+    var generatedKingMoves = false
     for bitboard in bitboards {
         if Piece.checkColor(piece: bitboard.key) == currentColor {
             var pieceSquares = [Int]()
@@ -27,24 +30,24 @@ func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Co
             }
             let pieceType = Piece.getType(piece: bitboard.key)
             
-
-            
             for square in pieceSquares {
                 switch pieceType {
                 case .queen:
-                    generateQueenMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves)
+                    generateQueenMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves, occupancy: occupancy)
                 case .bishop:
-                    generateBishopMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves)
+                    generateBishopMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves, occupancy: occupancy)
                 case .rook:
-                    generateRookMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves)
+                    generateRookMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves, occupancy: occupancy)
                 case .pawn:
-                    generatePawnMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves)
+                    generatePawnMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves, occupancy: occupancy)
                 case .king:
-                    generateKingMovesBitboard(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves)
-                    generateCastles(bitboards: bitboards, currentColor: currentColor, moves: &moves, castlesAvailable: castlesAvailable)
-
+                    if !generatedKingMoves {
+                        generateKingMovesBitboard(bitboards: bitboards, currentColor: currentColor, moves: &moves, occupancy: occupancy, attackedSquares: attackedSquares)
+                        generateCastles(bitboards: bitboards, currentColor: currentColor, moves: &moves, castlesAvailable: castlesAvailable, occupancy: occupancy, attackedSquares: attackedSquares)
+                        generatedKingMoves = true
+                    }
                 case .knight:
-                    generateKnightMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves)
+                    generateKnightMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves, occupancy: occupancy)
                     
                 default:
                     print("\(pieceType) is not found while generating moves")
@@ -55,10 +58,11 @@ func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Co
     }
 }
 
-func generateAllAttackedSquares(bitboards: [Int: Bitboard], currentColor: Piece.Color) -> Bitboard {
+func generateAllAttackedSquares(bitboards: [Int: Bitboard], currentColor: Piece.Color, occupancy: Occupancy? = nil) -> Bitboard {
+    let occ = occupancy ?? Occupancy.from(bitboards: bitboards)
     let enemyColor = currentColor.getOppositeColor()
     var attackBitboard = Bitboard(0)
-    let friendlyBitboard = currentColor == .black ? Magic.whitePiecesBitboards(bitboards: bitboards) : Magic.blackPiecesBitboards(bitboards: bitboards)
+    let friendlyBitboard = occ.friendly(for: enemyColor)
     for bitboard in bitboards {
         if Piece.checkColor(piece: bitboard.key) == enemyColor {
             var pieceSquares = [Int]()
@@ -72,15 +76,15 @@ func generateAllAttackedSquares(bitboards: [Int: Bitboard], currentColor: Piece.
             for square in pieceSquares {
                 switch pieceType {
                 case .queen:
-                    attackBitboard = attackBitboard | generateQueenAttacks(bitboards: bitboards, square: square, friendlyBitboard: friendlyBitboard)
+                    attackBitboard = attackBitboard | generateQueenAttacks(square: square, friendlyBitboard: friendlyBitboard, occupancy: occ)
                     
                 case .bishop:
-                    attackBitboard = attackBitboard | generateBishopAttacks(bitboards: bitboards, square: square, friendlyBitboard: friendlyBitboard)
+                    attackBitboard = attackBitboard | generateBishopAttacks(square: square, friendlyBitboard: friendlyBitboard, occupancy: occ)
                     
                 case .rook:
-                    attackBitboard = attackBitboard | generateRookAttacks(bitboards: bitboards, square: square, friendlyBitboard: friendlyBitboard)
+                    attackBitboard = attackBitboard | generateRookAttacks(square: square, friendlyBitboard: friendlyBitboard, occupancy: occ)
                 case .pawn:
-                    attackBitboard = attackBitboard | generatePawnAttacks(currentColor: currentColor.getOppositeColor(), square: square)
+                    attackBitboard = attackBitboard | generatePawnAttacks(currentColor: enemyColor, square: square)
                     
                 case .king:
                     attackBitboard = attackBitboard | generateKingAttacks(square: square, friendlyBitboard: friendlyBitboard)

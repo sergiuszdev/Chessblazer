@@ -19,7 +19,11 @@ class Game {
     func loadFromFen(fen: String) {
         boardState = GameEngine.loadBoardFromFen(fen: fen)
         boardState.currentValidMoves = generateAllLegalMoves(boardState: boardState)
-        boardState.attackBitboard = generateAllAttackedSquares(bitboards: boardState.bitboards, currentColor: boardState.currentTurnColor)
+        boardState.attackBitboard = generateAllAttackedSquares(
+            bitboards: boardState.bitboards,
+            currentColor: boardState.currentTurnColor,
+            occupancy: boardState.occupancy
+        )
     }
     
     func startNewGame() {
@@ -44,8 +48,13 @@ class Game {
         
         boardState = GameEngine.makeMove(boardState: boardState, move: move)
         boardState.currentTurnColor = boardState.currentTurnColor.getOppositeColor()
+        boardState.refreshOccupancy()
         boardState.currentValidMoves = generateAllLegalMoves(boardState: boardState)
-        boardState.attackBitboard = generateAllAttackedSquares(bitboards: boardState.bitboards, currentColor: boardState.currentTurnColor)
+        boardState.attackBitboard = generateAllAttackedSquares(
+            bitboards: boardState.bitboards,
+            currentColor: boardState.currentTurnColor,
+            occupancy: boardState.occupancy
+        )
         
         
         if boardState.currentValidMoves.isEmpty {
@@ -67,6 +76,7 @@ class Game {
         boardState.currentTurnColor = moveData.color
         boardState.currentValidMoves = moveData.currentValidMoves
         boardState.attackBitboard = moveData.attackBitboard
+        boardState.refreshOccupancy()
         
         
         if !boardState.currentValidMoves.isEmpty {

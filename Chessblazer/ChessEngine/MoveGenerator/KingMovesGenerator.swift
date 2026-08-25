@@ -7,24 +7,18 @@
 
 import Foundation
 
-func generateKingMovesBitboard(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move]) {
-    let attackedSquares = generateAllAttackedSquares(bitboards: bitboards, currentColor: currentColor)
-    var friendlyMask = Bitboard(0)
+func generateKingMovesBitboard(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], occupancy: Occupancy, attackedSquares: Bitboard) {
     var kingBitboard = Bitboard(0)
-        
     var pieceValue = 0
     
     if currentColor == .white {
         kingBitboard = bitboards[Piece.ColoredPieces.whiteKing.rawValue]!
         pieceValue = Piece.ColoredPieces.whiteKing.rawValue
-        friendlyMask = Magic.whitePiecesBitboards(bitboards: bitboards)
-        
-        
     } else {
         kingBitboard = bitboards[Piece.ColoredPieces.blackKing.rawValue]!
         pieceValue = Piece.ColoredPieces.blackKing.rawValue
-        friendlyMask = Magic.blackPiecesBitboards(bitboards: bitboards)
     }
+    let friendlyMask = occupancy.friendly(for: currentColor)
     
     while kingBitboard != 0 {
         let square = Bitboard.popLSB(&kingBitboard)
@@ -37,15 +31,13 @@ func generateKingMovesBitboard(bitboards: [Int: Bitboard], currentColor: Piece.C
             moves.append(move)
         }
     }
-    
 }
 
-func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], castlesAvailable: Set<Character>) {
-    let attackedSquares = generateAllAttackedSquares(bitboards: bitboards, currentColor: currentColor)
-    
+func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], castlesAvailable: Set<Character>, occupancy: Occupancy, attackedSquares: Bitboard) {
     if currentColor == .white {
         let kingBitboard = bitboards[Piece.ColoredPieces.whiteKing.rawValue]!
-        let friendlyMask = Magic.allPieces(bitboards: bitboards)
+        let friendlyMask = occupancy.all
+
 
 
         let isUnderAttack = kingBitboard & attackedSquares != 0
@@ -72,18 +64,25 @@ func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, move
             
             
             if isRightPossible && castlesAvailable.contains("K") {
-                let move = Move(fromSquare: 4, targetSquare: 7, kingValue: Piece.ColoredPieces.whiteKing.rawValue, rookValue: Piece.ColoredPieces.whiteRook.rawValue,kingDestination: 6, rookDestination: 5)
-                moves.append(move)
+                moves.append(Move(
+                    kingFrom: 4, kingTo: 6, rookFrom: 7, rookTo: 5,
+                    kingValue: Piece.ColoredPieces.whiteKing.rawValue,
+                    rookValue: Piece.ColoredPieces.whiteRook.rawValue
+                ))
             }
             
             if isLeftPossible && castlesAvailable.contains("Q") {
-                moves.append(Move(fromSquare: 4, targetSquare: 0, kingValue: Piece.ColoredPieces.whiteKing.rawValue, rookValue: Piece.ColoredPieces.whiteRook.rawValue, kingDestination: 2, rookDestination: 3))
+                moves.append(Move(
+                    kingFrom: 4, kingTo: 2, rookFrom: 0, rookTo: 3,
+                    kingValue: Piece.ColoredPieces.whiteKing.rawValue,
+                    rookValue: Piece.ColoredPieces.whiteRook.rawValue
+                ))
             }
         }
         
     } else {
         let kingBitboard = bitboards[Piece.ColoredPieces.blackKing.rawValue]!
-        let friendlyMask = Magic.allPieces(bitboards: bitboards)
+        let friendlyMask = occupancy.all
         let isUnderAttack = kingBitboard & attackedSquares != 0
 
         if !isUnderAttack {
@@ -104,11 +103,19 @@ func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, move
             let isLeftPossible = isLeftPathClear && isLeftPathNotUnderAttack && leftCorrectPositions
             
             if isRightPossible && castlesAvailable.contains("k") {
-                moves.append(Move(fromSquare: 60, targetSquare: 63, kingValue: Piece.ColoredPieces.blackKing.rawValue, rookValue: Piece.ColoredPieces.blackRook.rawValue, kingDestination: 62, rookDestination: 61))
+                moves.append(Move(
+                    kingFrom: 60, kingTo: 62, rookFrom: 63, rookTo: 61,
+                    kingValue: Piece.ColoredPieces.blackKing.rawValue,
+                    rookValue: Piece.ColoredPieces.blackRook.rawValue
+                ))
             }
             
             if isLeftPossible && castlesAvailable.contains("q") {
-                moves.append(Move(fromSquare: 60, targetSquare: 56, kingValue: Piece.ColoredPieces.blackKing.rawValue, rookValue: Piece.ColoredPieces.blackRook.rawValue, kingDestination: 58, rookDestination: 59))
+                moves.append(Move(
+                    kingFrom: 60, kingTo: 58, rookFrom: 56, rookTo: 59,
+                    kingValue: Piece.ColoredPieces.blackKing.rawValue,
+                    rookValue: Piece.ColoredPieces.blackRook.rawValue
+                ))
             }
         }
     }
