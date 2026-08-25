@@ -7,8 +7,6 @@
 
 import Foundation
 
-
-
 func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], lastMove: Move?, castlesAvailable: Set<Character>) {
     
     moves.removeAll()
@@ -61,7 +59,6 @@ func generateAllAttackedSquares(bitboards: [Int: Bitboard], currentColor: Piece.
     let enemyColor = currentColor.getOppositeColor()
     var attackBitboard = Bitboard(0)
     let friendlyBitboard = currentColor == .black ? Magic.whitePiecesBitboards(bitboards: bitboards) : Magic.blackPiecesBitboards(bitboards: bitboards)
-    var pawnAttackBitboard = Bitboard(0)
     for bitboard in bitboards {
         if Piece.checkColor(piece: bitboard.key) == enemyColor {
             var pieceSquares = [Int]()
@@ -83,8 +80,7 @@ func generateAllAttackedSquares(bitboards: [Int: Bitboard], currentColor: Piece.
                 case .rook:
                     attackBitboard = attackBitboard | generateRookAttacks(bitboards: bitboards, square: square, friendlyBitboard: friendlyBitboard)
                 case .pawn:
-                    pawnAttackBitboard = generatePawnAttacks(currentColor: currentColor.getOppositeColor(), square: square)
-                    attackBitboard = attackBitboard | pawnAttackBitboard
+                    attackBitboard = attackBitboard | generatePawnAttacks(currentColor: currentColor.getOppositeColor(), square: square)
                     
                 case .king:
                     attackBitboard = attackBitboard | generateKingAttacks(square: square, friendlyBitboard: friendlyBitboard)

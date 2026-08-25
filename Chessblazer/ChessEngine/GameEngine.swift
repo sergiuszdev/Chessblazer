@@ -82,7 +82,6 @@ class GameEngine {
                 break
             }
         }
-//        boardStateCopy.attackBitboard = generateAllAttackedSquares(bitboards: boardStateCopy.bitboards, currentColor: boardStateCopy.currentTurnColor)
         return boardStateCopy
     }
     

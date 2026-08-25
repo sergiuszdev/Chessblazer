@@ -9,7 +9,6 @@ import Foundation
 
 struct BoardState {
     var attackBitboard = Bitboard(0)
-    var pawnAttackBitboard = Bitboard(0)
     var performedMovesList = [MoveData]()
     var castlesAvailable: Set<Character> = []
     var currentTurnColor: Piece.Color // = .white

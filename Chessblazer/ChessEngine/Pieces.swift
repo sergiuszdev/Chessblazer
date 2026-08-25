@@ -30,13 +30,6 @@ class Piece {
                 return .white
             }
         }
-        mutating func toggleColor() {
-            if self == .white {
-                self = .black
-            } else {
-                self = .white
-            }
-        }
     }
     
     enum ColoredPieces: Int, CaseIterable {
@@ -70,11 +63,6 @@ class Piece {
         return type.rawValue | color.rawValue
     }
     
-    static func isType(piece: Int, typeToCheck: PieceType) -> Bool {
-        return piece == combine(type: typeToCheck, color: .black) || piece == combine(type: typeToCheck, color: .white)
-        
-    }
-    
     static func getType(piece: Int) -> PieceType {
         let colorValue = checkColor(piece: piece) == .white ? Color.white.rawValue : Color.black.rawValue
         let noColorPiece = piece - colorValue
@@ -90,21 +78,6 @@ class Piece {
             return .white
         }
     }
-    
-    static func areOppositeColors(piece1: Int, piece2: Int) -> Bool {
-        return Piece.checkColor(piece: piece1) != Piece.checkColor(piece: piece2)
-        
-    }
-    
-
-    static func isSliding(piece: Int) -> Bool {
-        return Piece.isType(piece: piece, typeToCheck: .bishop) || Piece.isType(piece: piece, typeToCheck: .queen) || Piece.isType(piece: piece, typeToCheck: .rook)
-    }
-    
-    static func isLeaping(piece: Int) -> Bool {
-        return Piece.isType(piece: piece, typeToCheck: .pawn) || Piece.isType(piece: piece, typeToCheck: .knight) || Piece.isType(piece: piece, typeToCheck: .king)
-    }
-    
     
     static let PiecesDict: [Character: PieceType] = [
         "0": PieceType.empty,

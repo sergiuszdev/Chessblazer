@@ -11,14 +11,12 @@ import Foundation
 class GameState {
     var game = Game()
     var evaluation = 0
-//    var boardState: [Int] = Array(repeating: 0, count: 64)
     var indexOfTappedPiece: Int = -1
     var tappedPieceTargets = [Int]()
     var attackTable = [Int]()
     var validMoves = [Move]()
     var currentColorToMove = Piece.Color.white
     var boardArray: [Int] = Array(repeating: 0, count: 64)
-    var vsEngine = false
     
     func startNewGame() {
         game = Game()
@@ -63,25 +61,8 @@ class GameState {
                 break
             }
         }
-//        let bp = BoardPrinter()
-//        bp.printBoard(board: game.toBoardArrayRepresentation(), emojiMode: true, perspectiveColor: .white)
-
     }
 
-    func engineMove() async {
-        print("engine is starting")
-//        while !game.boardData.hasGameEnded {
-            if vsEngine && currentColorToMove == .black {
-                let copy = game
-                let bestMove = findBestMove(game: copy, depth: 3, maximizingPlayer: false)
-                game.makeMove(move: bestMove!)
-                DispatchQueue.main.async {
-                    self.boardArray = self.game.toBoardArrayRepresentation()
-                }
-        }
-
-    }
-    
     func startPvE() async {
         while !game.boardData.hasGameEnded {
             if game.boardState.currentTurnColor == .black {

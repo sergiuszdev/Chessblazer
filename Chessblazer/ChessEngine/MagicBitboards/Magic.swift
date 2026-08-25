@@ -35,9 +35,7 @@ class Magic {
         return whitePiecesBitboards(bitboards: bitboards) | blackPiecesBitboards(bitboards: bitboards)
     }
     
-    
     static func createAllBlockers(movementMask: Bitboard) -> [Bitboard] {
-        
         var indexesToCheck = [Int]()
         var mask = movementMask
         
@@ -45,8 +43,7 @@ class Magic {
             indexesToCheck.append(Bitboard.popLSB(&mask))
         }
         
-        
-        let numberOfDiffBitboards = 1 << indexesToCheck.count // 2^n
+        let numberOfDiffBitboards = 1 << indexesToCheck.count
         var blockers = Array(repeating: Bitboard(0), count: numberOfDiffBitboards)
         
         for patternIndex in 0..<numberOfDiffBitboards {
@@ -57,19 +54,4 @@ class Magic {
         }
         return blockers
     }
-    
-
-
 }
-//protocol Slider {
-//    static var lookUpTable: [Int: [UInt64: Bitboard]] {get set}
-//    static var masks: [Bitboard] {get set}
-//    static func createLegalMoves(square: Int, blocker: Bitboard) -> Bitboard
-//}
-
-enum Slider {
-    case rook(Rook)
-    case bishop(Bishop)
-}
-
-

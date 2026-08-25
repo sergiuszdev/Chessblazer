@@ -69,7 +69,6 @@ func alphabeta(game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: 
         }
         return evaluate(bitboards: game.boardState.bitboards)
     }
-//    let moves = generateAllLegalMoves(boardState: game.boardState).sorted(by: >)
     let moves = game.boardState.currentValidMoves
     if maximizingPlayer {
         var maxEval = Int.min
@@ -127,8 +126,6 @@ func iterativeDeepening(game: Game, initialDepth: Int, maximizingPlayer: Bool) -
                 bestMove = move
             }
         }
-
-//        print("Depth: \(depth), Best Move: \(String(describing: bestMove?.moveToNotation())), Evaluation: \(bestEval)")
     }
 
     return bestMove
