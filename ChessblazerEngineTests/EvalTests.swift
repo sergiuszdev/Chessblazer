@@ -103,9 +103,16 @@ struct EvalTests {
         shielded.loadFromFen(fen: "3qk3/8/8/8/8/8/3PPP2/4K3 w - - 0 1")
         let exposed = Game()
         exposed.loadFromFen(fen: "3qk3/8/8/8/8/8/PPP5/4K3 w - - 0 1")
-        #expect(
-            evaluate(bitboards: shielded.boardState.bitboards)
-                > evaluate(bitboards: exposed.boardState.bitboards)
+        let shieldedSafety = evaluateKingSafety(
+            bitboards: shielded.boardState.bitboards,
+            occupancy: Occupancy.from(bitboards: shielded.boardState.bitboards),
+            phase: GamePhase.of(shielded.boardState.bitboards)
         )
+        let exposedSafety = evaluateKingSafety(
+            bitboards: exposed.boardState.bitboards,
+            occupancy: Occupancy.from(bitboards: exposed.boardState.bitboards),
+            phase: GamePhase.of(exposed.boardState.bitboards)
+        )
+        #expect(shieldedSafety > exposedSafety)
     }
 }
