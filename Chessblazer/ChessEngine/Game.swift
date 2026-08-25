@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftUI
 
 class Game {
     
@@ -50,12 +49,13 @@ class Game {
         
         
         if boardState.currentValidMoves.isEmpty {
+            boardData.hasGameEnded = true
             if isWhiteKingChecked(boardState: boardState) {
                 boardData.gameResult = .black
             } else if isBlackKingChecked(boardState: boardState) {
                 boardData.gameResult = .white
             } else {
-                boardData.gameResult = .none
+                boardData.gameResult = .draw
             }
         }
     }
@@ -74,25 +74,16 @@ class Game {
             boardData.gameResult = .none
         }
     }
-        
-    private func toBitboardsRepresentation(array: [Int]) -> [Piece.ColoredPieces.RawValue : Bitboard] {
-        var bitboards = [Piece.ColoredPieces.RawValue : Bitboard]()
-        
-        for (index, piece) in array.enumerated() {
-            if piece > 0 {
-                bitboards[piece] = (bitboards[piece] ?? Bitboard(0)) | (Bitboard(1) << Bitboard(UInt64(index)))
-            }
-        }
-        return bitboards
-    }
     
-    func findMove(notation: String) -> Move {
-        var move = Move(notation: notation)
-        
-        var found = boardState.currentValidMoves.first(where: {
-            $0.fromSquare == move.fromSquare && $0.targetSquare == move.targetSquare
-        })
-        return found!
+    func findMove(notation: String) -> Move? {
+        let parsed = Move(notation: notation)
+        guard parsed.fromSquare != nil, parsed.targetSquare != nil else { return nil }
+        return boardState.currentValidMoves.first { legal in
+            legal.fromSquare == parsed.fromSquare
+            && legal.targetSquare == parsed.targetSquare
+            && (parsed.promotionPiece == 0
+                || Piece.getType(piece: parsed.promotionPiece) == Piece.getType(piece: legal.promotionPiece))
+        }
     }
     
     

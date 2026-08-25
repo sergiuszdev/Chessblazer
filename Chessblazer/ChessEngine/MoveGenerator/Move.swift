@@ -64,25 +64,22 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         return (lhs.fromSquare == rhs.fromSquare) && (lhs.targetSquare == rhs.targetSquare)
     }
     
-    #warning("think about it")
     func moveValue(attackPawnTable: Bitboard = Bitboard(0)) -> Int {
         var score = 0
-        let pieceRealValue = PieceValueTable[pieceValue]!
-        let captureRealValue = PieceValueTable[pieceValue]!
+        let pieceRealValue = abs(PieceValueTable[pieceValue] ?? 0)
+        let captureRealValue = abs(PieceValueTable[captureValue] ?? 0)
 
-        if Piece.getType(piece: captureValue) == .king {
-            score += 50
-        } else if captureValue != 0 {
-            score += abs(captureRealValue) * 10 - abs(pieceRealValue)
+        if captureValue != 0 && !castling {
+            score += captureRealValue * 10 - pieceRealValue
         }
         
         if promotionPiece != 0 {
-            score += promotionPiece
+            score += abs(PieceValueTable[promotionPiece] ?? promotionPiece)
         }
 
         let b = (Bitboard(1) << Bitboard(targetSquare!))
         if b & attackPawnTable == b {
-            score -= abs(pieceRealValue)
+            score -= pieceRealValue
         }
         return score
     }

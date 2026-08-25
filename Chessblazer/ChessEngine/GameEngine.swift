@@ -82,7 +82,6 @@ class GameEngine {
                 break
             }
         }
-//        boardStateCopy.attackBitboard = generateAllAttackedSquares(bitboards: boardStateCopy.bitboards, currentColor: boardStateCopy.currentTurnColor)
         return boardStateCopy
     }
     
@@ -183,14 +182,20 @@ class GameEngine {
     
     static func loadBoardFromFen(fen: String) -> BoardState {
         var boardState = BoardState(currentTurnColor: .white)
-        let args = fen.components(separatedBy: " ")
-        boardState.currentTurnColor = args[1] == "w" ? .white : .black
-        boardState.castlesAvailable.removeAll()
-        for letter in args[2] {
-            if letter == "-" { break } else {boardState.castlesAvailable.insert(letter)}
+        let args = fen.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        if args.count > 1 {
+            boardState.currentTurnColor = args[1] == "w" ? .white : .black
         }
-        boardState.enPassant = args[3]
-        let ranks: [String] = args[0].components(separatedBy: "/")
+        boardState.castlesAvailable.removeAll()
+        if args.count > 2 {
+            for letter in args[2] {
+                if letter == "-" { break } else { boardState.castlesAvailable.insert(letter) }
+            }
+        }
+        if args.count > 3 {
+            boardState.enPassant = args[3]
+        }
+        let ranks: [String] = (args.first ?? "").components(separatedBy: "/")
         var index = 0
         for rank in ranks.reversed() {
             

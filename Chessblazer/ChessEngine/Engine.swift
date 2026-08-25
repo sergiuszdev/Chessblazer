@@ -7,115 +7,163 @@
 
 import Foundation
 
-class Engine {
+final class Engine: @unchecked Sendable {
     let engineName = "Chessblazer"
     let engineVersion = "alpha 0.001"
     var quit = false
     let engineAuthor = "sergiusz"
     
     var game = Game()
+    private var uciOptions = EngineUciOptions()
     
-    func getInput(command input: String) {
-        let args = input.components(separatedBy: .whitespaces)
-        guard let command = CommandsGUItoEngine(rawValue: args[0]) else { return }
+    private let outputLock = NSLock()
+    private let flagLock = NSLock()
+    private var stopSearch = false
+    private let searchQueue = DispatchQueue(label: "chessblazer.search", qos: .userInitiated)
+    private let searchGroup = DispatchGroup()
+    
+    func processInput(command input: String) {
+        let args = input.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        guard let token = args.first, let command = CommandsGUItoEngine(rawValue: token) else { return }
 
         switch command {
         case .uci:
-            sendOutput(output: "id name \(engineName)")
+            sendOutput(output: "id name \(engineName) \(engineVersion)")
             sendOutput(output: "id author \(engineAuthor)")
+            for option in EngineUciOptions.advertised {
+                sendOutput(output: option.advertisement)
+            }
             sendOutput(output: "uciok")
         case .isready:
-            // loadEngine first 
             sendOutput(output: "readyok")
+        case .setoption:
+            if let parsed = parseUciSetOption(args: args) {
+                uciOptions.set(name: parsed.name, value: parsed.value)
+            }
         case .ucinewgame:
+            haltSearch()
             game.startNewGame()
             
         case .position:
-            if args[1] == "fen" {
-                game.loadFromFen(fen: args[2])
-            } else if args[1] == "startpos" {
-                game.startNewGame()
-                if args.indices.contains(2), args[2] == "moves" {
-                    let moves = args[3..<args.count]
-                    for move in moves {
-                        game.makeMove(move: game.findMove(notation: move))
-                        
-                    }
-                }
-            }
+            haltSearch()
+            applyPosition(args: args)
 
         case .go:
-            //            let command = "go searchmoves e2e4 d2d4 ponder wtime 300000 btime 300000 winc 5000 binc 5000 movestogo 30 depth 20 nodes 1000000 mate 2 movetime 60000 infinite"
-
-            let parsedParams = UciGoInput.parse(from: input)
-//            print("Parsed UCI Go Input:", parsedParams)
-            let bestMove = game.boardState.currentTurnColor == .white ? findBestMove(game: game, depth: 3, maximizingPlayer: true) : findBestMove(game: game, depth: 3, maximizingPlayer: false)
-            if let move = bestMove {
-                print("bestmove \(moveToNotation(move: move))")
-            }
-            // so go for dsl regex to capture all possible params and then handle it
-            // if no depth then lets say depth = 50 and make it async so you can send signal to stop with .stop
-            
+            haltSearch()
+            let go = UciGoInput.parse(from: input)
+            let limits = SearchLimits.from(
+                go: go,
+                sideToMove: game.boardState.currentTurnColor,
+                moveOverheadMs: uciOptions.moveOverheadMs
+            )
+            startSearch(limits: limits)
             
         case .stop:
-            // here should be sent signal to stop searching for best move
+            requestStop()
             
-            print("")
+        case .ponderhit:
+            break
+        
         case .quit:
+            haltSearch()
             quit = true
         
-            
-            
-            
-        // custom commands
-            
         case .eve:
+            haltSearch()
             let game = Game()
             game.startNewGame()
             let bp = BoardPrinter()
             bp.printBoard(board: game.toBoardArrayRepresentation())
 
             while !game.boardData.hasGameEnded {
-                let bestMove = game.boardState.currentTurnColor == .white ? findBestMove(game: game, depth: 3, maximizingPlayer: true) : findBestMove(game: game, depth: 3, maximizingPlayer: false)
-                
-                game.makeMove(move: bestMove!)
+                let maximizingPlayer = game.boardState.currentTurnColor == .white
+                let limits = SearchLimits(maxDepth: 4, allocatedTime: 1.0)
+                guard let bestMove = findBestMove(game: game, limits: limits, maximizingPlayer: maximizingPlayer) else {
+                    break
+                }
+                game.makeMove(move: bestMove)
                 bp.printBoard(board: game.toBoardArrayRepresentation())
-                
             }
-            
-        case .printBoard:
-            print("")
-        
-        case .main:
-            saveKeys()
-            
-        case .mateInOne:
-            let bp = BoardPrinter()
-            let game = Game()
-            //rnb1k1nr/pppp1ppp/5q2/2b1p3/2B1P2P/N7/PPPP1PP1/R1BQK1NR b KQkq - 0 4
-            game.loadFromFen(fen: "rnbqkbnr/1ppp1pp1/7p/p3p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 4")
-            let bestMove = game.boardState.currentTurnColor == .white ? findBestMove(game: game, depth: 3, maximizingPlayer: true) : findBestMove(game: game, depth: 3, maximizingPlayer: false)
-            
-            game.makeMove(move: bestMove!)
-            bp.printBoard(board: game.toBoardArrayRepresentation())
-            
-            
-        case .promotion:
-            let bp = BoardPrinter()
-            game.loadFromFen(fen: "6br/5Ppk/7p/5K2/8/8/8/8 w - - 0 1")
-            
-            bp.printBoard(board: game.toBoardArrayRepresentation(), emojiMode: true)
-            let bestMove = game.boardState.currentTurnColor == .white ? findBestMove(game: game, depth: 3, maximizingPlayer: true) : findBestMove(game: game, depth: 3, maximizingPlayer: false)
-            game.makeMove(move: bestMove!)
-            bp.printBoard(board: game.toBoardArrayRepresentation(), emojiMode: true)
-            
+
         default:
             return
         }
     }
+    
+    private func startSearch(limits: SearchLimits) {
+        setStopSearch(false)
+        let maximizingPlayer = game.boardState.currentTurnColor == .white
+        searchGroup.enter()
+        searchQueue.async {
+            defer { self.searchGroup.leave() }
+            let move = findBestMove(
+                game: self.game,
+                limits: limits,
+                maximizingPlayer: maximizingPlayer,
+                isCancelled: { self.isStopRequested() },
+                onInfo: { self.sendOutput(output: $0) }
+            )
+            let chosen = move ?? self.game.boardState.currentValidMoves.first
+            if let chosen {
+                self.sendOutput(output: "bestmove \(moveToNotation(move: chosen))")
+            } else {
+                self.sendOutput(output: "bestmove 0000")
+            }
+        }
+    }
+    
+    private func requestStop() {
+        setStopSearch(true)
+    }
+    
+    private func haltSearch() {
+        requestStop()
+        searchGroup.wait()
+    }
+    
+    private func setStopSearch(_ value: Bool) {
+        flagLock.lock()
+        stopSearch = value
+        flagLock.unlock()
+    }
+    
+    private func isStopRequested() -> Bool {
+        flagLock.lock()
+        defer { flagLock.unlock() }
+        return stopSearch
+    }
+    
+    private func applyPosition(args: [String]) {
+        guard args.count >= 2 else { return }
+        let movesIndex = args.firstIndex(of: "moves")
+        
+        if args[1] == "fen" {
+            let fenEnd = movesIndex ?? args.count
+            guard fenEnd > 2 else { return }
+            let fen = args[2..<fenEnd].joined(separator: " ")
+            game.loadFromFen(fen: fen)
+        } else if args[1] == "startpos" {
+            game.startNewGame()
+        } else {
+            return
+        }
+        
+        if let movesIndex, movesIndex + 1 < args.count {
+            for notation in args[(movesIndex + 1)...] {
+                if let move = game.findMove(notation: notation) {
+                    game.makeMove(move: move)
+                } else {
+                    sendOutput(output: "info string unknown move \(notation)")
+                }
+            }
+        }
+    }
 
     func sendOutput(output: String) {
+        outputLock.lock()
         print(output)
+        fflush(stdout)
+        outputLock.unlock()
     }
 }
 
@@ -126,35 +174,11 @@ enum CommandsGUItoEngine: String {
     case setoption
     case register
     case ucinewgame
-    case position // position [fen <fenstring> | startpos ]  moves <move1> .... <movei>
+    case position
     case go
     case stop
     case ponderhit
     case quit
-    
-    //custom
-    case printBoard
     case pve
-    case main
-    case promotion
-    case eve // Engine vs Engine
-    case mateInOne
+    case eve
 }
-
-enum CommandsEnginetoGUI {
-    case id
-    case uciok
-    case readyok
-    case bestmove
-    case copyprotection
-    case registration
-    //...
-}
-
-
-/*
- The engine should boot and wait for input from the GUI,
-   the engine should wait for the "isready" or "setoption" command to set up its internal parameters
-   as the boot process should be as quick as possible
- */
-

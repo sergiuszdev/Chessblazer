@@ -70,14 +70,4 @@ class BoardPrinter {
         
         print("")
     }
-    func debugPrint(board: [Int]) {
-        print()
-        for (index, value) in board.enumerated() {
-            if index % 8 == 0 && index != 0 {
-                print()
-            }
-            print("\(index):\(value)", terminator: " ")
-        }
-        print()
-    }
 }

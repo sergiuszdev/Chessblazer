@@ -7,12 +7,9 @@
 
 import Foundation
 
-let timeLimit: TimeInterval = 0.01
-
-func isTimeLimitExceeded(searchStartTime: TimeInterval) -> Bool {
-    return Date().timeIntervalSince1970 - searchStartTime >= timeLimit
-}
 let MATE_VALUE = 50000
+private let quiescenceMaxPly = 12
+
 let PieceValueTable: [Int: Int] = [
     Piece.ColoredPieces.empty.rawValue : 0,
     Piece.ColoredPieces.whitePawn.rawValue : 100,
@@ -29,6 +26,39 @@ let PieceValueTable: [Int: Int] = [
     Piece.ColoredPieces.blackQueen.rawValue : -900,
     Piece.ColoredPieces.blackKing.rawValue : -20000,
 ]
+
+final class SearchContext {
+    let startTime: TimeInterval
+    let timeLimit: TimeInterval?
+    let isCancelled: () -> Bool
+    let onInfo: ((String) -> Void)?
+    private(set) var timedOut = false
+    
+    init(
+        limits: SearchLimits,
+        isCancelled: @escaping () -> Bool = { false },
+        onInfo: ((String) -> Void)? = nil
+    ) {
+        startTime = Date().timeIntervalSince1970
+        timeLimit = limits.allocatedTime
+        self.isCancelled = isCancelled
+        self.onInfo = onInfo
+    }
+    
+    func shouldStop() -> Bool {
+        if isCancelled() {
+            timedOut = true
+            return true
+        }
+        guard let timeLimit else { return false }
+        if Date().timeIntervalSince1970 - startTime >= timeLimit {
+            timedOut = true
+            return true
+        }
+        return false
+    }
+}
+
 func countMaterial(bitboards: [Int: Bitboard]) -> Int {
     var whiteSum = 0
     var blackSum = 0
@@ -52,32 +82,48 @@ func evaluate(bitboards: [Int: Bitboard]) -> Int {
     return countMaterial(bitboards: bitboards)
 }
 
-func alphabeta(game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: Bool) -> Int {
+func terminalScore(game: Game, ply: Int) -> Int? {
+    guard game.boardState.currentValidMoves.isEmpty else { return nil }
+    if checkIfCheck(boardState: game.boardState) {
+        if game.boardState.currentTurnColor == .white {
+            return -MATE_VALUE + ply
+        } else {
+            return MATE_VALUE - ply
+        }
+    }
+    return 0
+}
+
+func isTactical(_ move: Move) -> Bool {
+    if move.castling { return false }
+    return move.captureValue != 0 || move.promotionPiece != 0 || move.enPasssantCapture != 0
+}
+
+func alphabeta(game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int, context: SearchContext) -> Int {
     var alpha = alpha
     var beta = beta
-
-    if depth == 0 {
-        
-        if game.boardState.currentValidMoves.isEmpty {
-            if isWhiteKingChecked(boardState: game.boardState) {
-                return MATE_VALUE
-            } else if isBlackKingChecked(boardState: game.boardState) {
-                return -MATE_VALUE
-            } else {
-                return 0 //draw
-            }
-        }
+    
+    if context.shouldStop() {
         return evaluate(bitboards: game.boardState.bitboards)
     }
-//    let moves = generateAllLegalMoves(boardState: game.boardState).sorted(by: >)
-    let moves = game.boardState.currentValidMoves
+    
+    if let score = terminalScore(game: game, ply: ply) {
+        return score
+    }
+    
+    if depth <= 0 {
+        return quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: maximizingPlayer, ply: ply, qsPly: 0, context: context)
+    }
+    
+    let moves = game.boardState.currentValidMoves.sorted(by: >)
     if maximizingPlayer {
         var maxEval = Int.min
         for move in moves {
+            if context.shouldStop() { break }
             game.makeMove(move: move)
-            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false)
+            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false, ply: ply + 1, context: context)
             game.undoMove()
-
+            
             maxEval = max(maxEval, eval)
             alpha = max(alpha, maxEval)
             if beta <= alpha {
@@ -88,10 +134,82 @@ func alphabeta(game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: 
     } else {
         var minEval = Int.max
         for move in moves {
+            if context.shouldStop() { break }
             game.makeMove(move: move)
-            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true)
+            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true, ply: ply + 1, context: context)
             game.undoMove()
+            
+            minEval = min(minEval, eval)
+            beta = min(beta, minEval)
+            if beta <= alpha {
+                break
+            }
+        }
+        return minEval
+    }
+}
 
+func quiesce(game: Game, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int, qsPly: Int, context: SearchContext) -> Int {
+    var alpha = alpha
+    var beta = beta
+    
+    if context.shouldStop() {
+        return evaluate(bitboards: game.boardState.bitboards)
+    }
+    
+    if let score = terminalScore(game: game, ply: ply) {
+        return score
+    }
+    
+    let inCheck = checkIfCheck(boardState: game.boardState)
+    let standPat = evaluate(bitboards: game.boardState.bitboards)
+    
+    if !inCheck {
+        if maximizingPlayer {
+            if standPat >= beta { return standPat }
+            alpha = max(alpha, standPat)
+        } else {
+            if standPat <= alpha { return standPat }
+            beta = min(beta, standPat)
+        }
+        if qsPly >= quiescenceMaxPly {
+            return standPat
+        }
+    } else if qsPly >= quiescenceMaxPly {
+        return standPat
+    }
+    
+    let moves = inCheck
+        ? game.boardState.currentValidMoves.sorted(by: >)
+        : game.boardState.currentValidMoves.filter(isTactical).sorted(by: >)
+    
+    if moves.isEmpty {
+        return standPat
+    }
+    
+    if maximizingPlayer {
+        var maxEval = inCheck ? Int.min : standPat
+        for move in moves {
+            if context.shouldStop() { break }
+            game.makeMove(move: move)
+            let eval = quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: false, ply: ply + 1, qsPly: qsPly + 1, context: context)
+            game.undoMove()
+            
+            maxEval = max(maxEval, eval)
+            alpha = max(alpha, maxEval)
+            if beta <= alpha {
+                break
+            }
+        }
+        return maxEval
+    } else {
+        var minEval = inCheck ? Int.max : standPat
+        for move in moves {
+            if context.shouldStop() { break }
+            game.makeMove(move: move)
+            let eval = quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: true, ply: ply + 1, qsPly: qsPly + 1, context: context)
+            game.undoMove()
+            
             minEval = min(minEval, eval)
             beta = min(beta, minEval)
             if beta <= alpha {
@@ -103,81 +221,93 @@ func alphabeta(game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: 
 }
 
 func findBestMove(game: Game, depth: Int, maximizingPlayer: Bool) -> Move? {
-    return iterativeDeepening(game: game, initialDepth: depth, maximizingPlayer: maximizingPlayer)
+    return findBestMove(game: game, limits: SearchLimits(maxDepth: depth, allocatedTime: nil), maximizingPlayer: maximizingPlayer)
 }
 
-func iterativeDeepening(game: Game, initialDepth: Int, maximizingPlayer: Bool) -> Move? {
-    let searchStartTime = Date().timeIntervalSince1970
-    var bestMove: Move? = nil
-    var bestEval = maximizingPlayer ? Int.min : Int.max
+func findBestMove(
+    game: Game,
+    limits: SearchLimits,
+    maximizingPlayer: Bool,
+    isCancelled: @escaping () -> Bool = { false },
+    onInfo: ((String) -> Void)? = nil
+) -> Move? {
+    let searched = iterativeDeepening(
+        game: game,
+        limits: limits,
+        maximizingPlayer: maximizingPlayer,
+        isCancelled: isCancelled,
+        onInfo: onInfo
+    )
+    return searched ?? game.boardState.currentValidMoves.first
+}
 
-    for depth in initialDepth...100 {
-        if isTimeLimitExceeded(searchStartTime: searchStartTime) {
+func iterativeDeepening(
+    game: Game,
+    limits: SearchLimits,
+    maximizingPlayer: Bool,
+    isCancelled: @escaping () -> Bool,
+    onInfo: ((String) -> Void)?
+) -> Move? {
+    let context = SearchContext(limits: limits, isCancelled: isCancelled, onInfo: onInfo)
+    var bestMove: Move? = nil
+    
+    for depth in 1...limits.maxDepth {
+        if context.shouldStop() {
             break
         }
-        let (move, eval) = performSearch(game: game, depth: depth, maximizingPlayer: maximizingPlayer)
-        if maximizingPlayer {
-            if eval > bestEval {
-                bestEval = eval
-                bestMove = move
-            }
-        } else {
-            if eval < bestEval {
-                bestEval = eval
-                bestMove = move
-            }
+        let (move, eval) = performSearch(game: game, depth: depth, maximizingPlayer: maximizingPlayer, context: context)
+        if let move {
+            bestMove = move
+            let engineScore = maximizingPlayer ? eval : -eval
+            onInfo?("info depth \(depth) score cp \(engineScore)")
         }
-
-//        print("Depth: \(depth), Best Move: \(String(describing: bestMove?.moveToNotation())), Evaluation: \(bestEval)")
+        if context.timedOut {
+            break
+        }
     }
-
+    
     return bestMove
 }
 
-func performSearch(game: Game, depth: Int, maximizingPlayer: Bool) -> (Move?, Int) {
-    let legalMoves = generateAllLegalMoves(boardState: game.boardState).sorted(by: >)
+func performSearch(game: Game, depth: Int, maximizingPlayer: Bool, context: SearchContext) -> (Move?, Int) {
+    let legalMoves = game.boardState.currentValidMoves.sorted(by: >)
     
+    if legalMoves.isEmpty {
+        return (nil, terminalScore(game: game, ply: 0) ?? 0)
+    }
     
     var bestMove: Move? = nil
-    var alpha = Int.min
-    var beta = Int.max
+    var alpha = -MATE_VALUE * 2
+    var beta = MATE_VALUE * 2
     var bestEval = maximizingPlayer ? Int.min : Int.max
-
+    
     if maximizingPlayer {
         for move in legalMoves {
+            if context.shouldStop() { break }
             game.makeMove(move: move)
-
-            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false)
+            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false, ply: 1, context: context)
             game.undoMove()
-
+            
             if eval > bestEval {
                 bestEval = eval
                 bestMove = move
                 alpha = max(alpha, bestEval)
             }
-
-            if beta <= alpha {
-                break
-            }
         }
     } else {
         for move in legalMoves {
+            if context.shouldStop() { break }
             game.makeMove(move: move)
-
-            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true)
+            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true, ply: 1, context: context)
             game.undoMove()
-
+            
             if eval < bestEval {
                 bestEval = eval
                 bestMove = move
                 beta = min(beta, bestEval)
             }
-
-            if beta <= alpha {
-                break
-            }
         }
     }
-
+    
     return (bestMove, bestEval)
 }

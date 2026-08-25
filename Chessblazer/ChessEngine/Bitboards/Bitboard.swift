@@ -26,13 +26,3 @@ extension UInt64 {
         static let rank5: Bitboard = 0x000000FF00000000
     }
 }
-
-//extension Bitboard: ExpressibleByIntegerLiteral {
-//    public init(integerLiteral value: UInt64) {
-//        self.init(value)
-//    }
-//    
-//    
-//}
-
-

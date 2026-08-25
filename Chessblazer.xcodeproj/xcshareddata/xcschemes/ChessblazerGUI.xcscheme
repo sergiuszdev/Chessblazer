@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "3181290E2C51B369002F1E40"
-               BuildableName = "Chessblazer"
-               BlueprintName = "Chessblazer"
+               BlueprintIdentifier = "3181292C2C55B0C4002F1E40"
+               BuildableName = "ChessblazerGUI.app"
+               BlueprintName = "ChessblazerGUI"
                ReferencedContainer = "container:Chessblazer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -40,14 +40,14 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
-      viewDebuggingEnabled = "No">
+      queueDebuggingEnableBacktraceRecording = "Yes">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3181290E2C51B369002F1E40"
-            BuildableName = "Chessblazer"
-            BlueprintName = "Chessblazer"
+            BlueprintIdentifier = "3181292C2C55B0C4002F1E40"
+            BuildableName = "ChessblazerGUI.app"
+            BlueprintName = "ChessblazerGUI"
             ReferencedContainer = "container:Chessblazer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,9 +62,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3181290E2C51B369002F1E40"
-            BuildableName = "Chessblazer"
-            BlueprintName = "Chessblazer"
+            BlueprintIdentifier = "3181292C2C55B0C4002F1E40"
+            BuildableName = "ChessblazerGUI.app"
+            BlueprintName = "ChessblazerGUI"
             ReferencedContainer = "container:Chessblazer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

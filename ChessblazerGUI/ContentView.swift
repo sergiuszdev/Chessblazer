@@ -107,20 +107,6 @@ struct ContentView: View {
     }
 }
 
-struct PromotionButton: View {
-    let imageName: String
-    var body: some View {
-        Button {
-            
-        } label: {
-            Image(imageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 75, height: 75)
-        }
-    }
-}
-
 #Preview {
     ContentView()
 }

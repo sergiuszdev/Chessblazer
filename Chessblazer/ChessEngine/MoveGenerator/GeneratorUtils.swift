@@ -15,19 +15,6 @@ func emptySquaresBitboard(bitboards: [Int: Bitboard]) -> Bitboard {
     return ~notEmpty
 }
 
-func getKingPosition(bitboards: [Int: Bitboard], color: Piece.Color) -> Int {
-    
-    if color == .white {
-        var b = bitboards[Piece.ColoredPieces.whiteKing.rawValue]!
-        let square = Bitboard.popLSB(&b)
-        return square
-    } else {
-        var b = bitboards[Piece.ColoredPieces.blackKing.rawValue]!
-        let square = Bitboard.popLSB(&b)
-        return square
-    }
-}
-
 func getKingBitboard(bitboards: [Int: Bitboard], color: Piece.Color) -> Bitboard {
     
     if color == .white {
