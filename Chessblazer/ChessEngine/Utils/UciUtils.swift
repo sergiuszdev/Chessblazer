@@ -134,7 +134,8 @@ struct UciOption {
 struct EngineUciOptions {
     static let advertised: [UciOption] = [
         UciOption(name: "Hash", type: "spin", defaultValue: "16", min: 1, max: 4096),
-        UciOption(name: "Threads", type: "spin", defaultValue: "1", min: 1, max: 1),
+        // Single-threaded search; max is advertised so GUIs can set Threads: 4.
+        UciOption(name: "Threads", type: "spin", defaultValue: "1", min: 1, max: 256),
         UciOption(name: "Ponder", type: "check", defaultValue: "false"),
         UciOption(name: "Move Overhead", type: "spin", defaultValue: "10", min: 0, max: 5000),
         UciOption(name: "UCI_Chess960", type: "check", defaultValue: "false"),

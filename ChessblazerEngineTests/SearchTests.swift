@@ -75,6 +75,11 @@ struct SearchTests {
         #expect(advertised.contains("Move Overhead"))
         #expect(advertised.contains("Hash"))
         #expect(advertised.contains("Threads"))
+        
+        let threads = EngineUciOptions.advertised.first { $0.name == "Threads" }
+        #expect(threads?.min == 1)
+        #expect((threads?.max ?? 0) >= 4)
+        #expect(threads?.advertisement.contains("max 256") == true)
     }
     
     @Test func clockSearchSubtractsMoveOverhead() {
