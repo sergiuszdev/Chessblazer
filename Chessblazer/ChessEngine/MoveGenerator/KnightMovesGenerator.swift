@@ -8,7 +8,7 @@
 import Foundation
 
 
-func generateKnightMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
+func generateKnightMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
     var knightBitboard = Bitboard(1) << Bitboard(square)
     var pieceValue = 0
     let friendlyMask = occupancy.friendly(for: currentColor)

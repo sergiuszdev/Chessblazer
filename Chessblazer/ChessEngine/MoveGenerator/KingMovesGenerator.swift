@@ -7,15 +7,15 @@
 
 import Foundation
 
-func generateKingMovesBitboard(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], occupancy: Occupancy, attackedSquares: Bitboard) {
+func generateKingMovesBitboard(bitboards: PieceBitboards, currentColor: Piece.Color, moves: inout [Move], occupancy: Occupancy, attackedSquares: Bitboard) {
     var kingBitboard = Bitboard(0)
     var pieceValue = 0
     
     if currentColor == .white {
-        kingBitboard = bitboards[Piece.ColoredPieces.whiteKing.rawValue]!
+        kingBitboard = bitboards[Piece.ColoredPieces.whiteKing.rawValue]
         pieceValue = Piece.ColoredPieces.whiteKing.rawValue
     } else {
-        kingBitboard = bitboards[Piece.ColoredPieces.blackKing.rawValue]!
+        kingBitboard = bitboards[Piece.ColoredPieces.blackKing.rawValue]
         pieceValue = Piece.ColoredPieces.blackKing.rawValue
     }
     let friendlyMask = occupancy.friendly(for: currentColor)
@@ -33,9 +33,9 @@ func generateKingMovesBitboard(bitboards: [Int: Bitboard], currentColor: Piece.C
     }
 }
 
-func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], castlesAvailable: Set<Character>, occupancy: Occupancy, attackedSquares: Bitboard) {
+func generateCastles(bitboards: PieceBitboards, currentColor: Piece.Color, moves: inout [Move], castlesAvailable: Set<Character>, occupancy: Occupancy, attackedSquares: Bitboard) {
     if currentColor == .white {
-        let kingBitboard = bitboards[Piece.ColoredPieces.whiteKing.rawValue]!
+        let kingBitboard = bitboards[Piece.ColoredPieces.whiteKing.rawValue]
         let friendlyMask = occupancy.all
 
 
@@ -43,7 +43,7 @@ func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, move
         let isUnderAttack = kingBitboard & attackedSquares != 0
         if !isUnderAttack {
             
-            let rooksBitboard = bitboards[Piece.ColoredPieces.whiteRook.rawValue]!
+            let rooksBitboard = bitboards[Piece.ColoredPieces.whiteRook.rawValue]
             
 
             let piecesRank1 = friendlyMask & Bitboard.Masks.rank1
@@ -81,12 +81,12 @@ func generateCastles(bitboards: [Int: Bitboard], currentColor: Piece.Color, move
         }
         
     } else {
-        let kingBitboard = bitboards[Piece.ColoredPieces.blackKing.rawValue]!
+        let kingBitboard = bitboards[Piece.ColoredPieces.blackKing.rawValue]
         let friendlyMask = occupancy.all
         let isUnderAttack = kingBitboard & attackedSquares != 0
 
         if !isUnderAttack {
-            let rooksBitboard = bitboards[Piece.ColoredPieces.blackRook.rawValue]!
+            let rooksBitboard = bitboards[Piece.ColoredPieces.blackRook.rawValue]
             let piecesRank8 = friendlyMask & Bitboard.Masks.rank8
             let rooksKing = rooksBitboard | kingBitboard
             

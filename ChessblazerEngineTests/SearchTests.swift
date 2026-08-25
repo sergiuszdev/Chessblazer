@@ -104,6 +104,34 @@ struct SearchTests {
         #expect(moveToNotation(move: blackQueenSide!) == "e8c8")
     }
     
+    @Test func playUnplayRestoresPosition() {
+        let game = Game()
+        let startBoard = game.toBoardArrayRepresentation()
+        let startCastles = game.boardState.castlesAvailable
+        let move = game.boardState.currentValidMoves.first { moveToNotation(move: $0) == "e2e4" }
+        #expect(move != nil)
+        game.play(move!)
+        #expect(game.boardState.currentTurnColor == .black)
+        #expect(game.toBoardArrayRepresentation() != startBoard)
+        game.unplay()
+        #expect(game.boardState.currentTurnColor == .white)
+        #expect(game.toBoardArrayRepresentation() == startBoard)
+        #expect(game.boardState.castlesAvailable == startCastles)
+        #expect(game.boardState.undoStack.isEmpty)
+    }
+    
+    @Test func playUnplayRestoresCastle() {
+        let game = Game()
+        game.loadFromFen(fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -")
+        let startBoard = game.toBoardArrayRepresentation()
+        let castle = game.findMove(notation: "e1g1")!
+        game.play(castle)
+        game.unplay()
+        #expect(game.toBoardArrayRepresentation() == startBoard)
+        #expect(game.boardState.currentTurnColor == .white)
+        #expect(game.findMove(notation: "e1g1") != nil)
+    }
+    
     @Test func clockSearchSubtractsMoveOverhead() {
         let go = UciGoInput.parse(from: "go wtime 60000 btime 60000")
         let limits = SearchLimits.from(go: go, sideToMove: .white, moveOverheadMs: 2000)

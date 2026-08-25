@@ -7,7 +7,7 @@
 
 import Foundation
 
-func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, moves: inout [Move], lastMove: Move?, castlesAvailable: Set<Character>) {
+func generateAllPossibleMoves(bitboards: PieceBitboards, currentColor: Piece.Color, moves: inout [Move], lastMove: Move?, castlesAvailable: Set<Character>) {
     
     moves.removeAll()
     let occupancy = Occupancy.from(bitboards: bitboards)
@@ -20,15 +20,15 @@ func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Co
     }
     
     var generatedKingMoves = false
-    for bitboard in bitboards {
-        if Piece.checkColor(piece: bitboard.key) == currentColor {
+    bitboards.forEachOccupied { piece, board in
+        if Piece.checkColor(piece: piece) == currentColor {
             var pieceSquares = [Int]()
-            var copyBitboard: Bitboard = bitboard.value
+            var copyBitboard: Bitboard = board
             
             while copyBitboard != 0 {
                 pieceSquares.append(Bitboard.popLSB(&copyBitboard))
             }
-            let pieceType = Piece.getType(piece: bitboard.key)
+            let pieceType = Piece.getType(piece: piece)
             
             for square in pieceSquares {
                 switch pieceType {
@@ -58,20 +58,20 @@ func generateAllPossibleMoves(bitboards: [Int: Bitboard], currentColor: Piece.Co
     }
 }
 
-func generateAllAttackedSquares(bitboards: [Int: Bitboard], currentColor: Piece.Color, occupancy: Occupancy? = nil) -> Bitboard {
+func generateAllAttackedSquares(bitboards: PieceBitboards, currentColor: Piece.Color, occupancy: Occupancy? = nil) -> Bitboard {
     let occ = occupancy ?? Occupancy.from(bitboards: bitboards)
     let enemyColor = currentColor.getOppositeColor()
     var attackBitboard = Bitboard(0)
     let friendlyBitboard = occ.friendly(for: enemyColor)
-    for bitboard in bitboards {
-        if Piece.checkColor(piece: bitboard.key) == enemyColor {
+    bitboards.forEachOccupied { piece, board in
+        if Piece.checkColor(piece: piece) == enemyColor {
             var pieceSquares = [Int]()
-            var copyBitboard: Bitboard = bitboard.value
+            var copyBitboard: Bitboard = board
             
             while copyBitboard != 0 {
                 pieceSquares.append(Bitboard.popLSB(&copyBitboard))
             }
-            let pieceType = Piece.getType(piece: bitboard.key)
+            let pieceType = Piece.getType(piece: piece)
             
             for square in pieceSquares {
                 switch pieceType {
@@ -106,7 +106,7 @@ func generateAllLegalMoves(boardState: BoardState) -> [Move] {
     
     var possibleMoves = [Move]()
     var legalMoves = [Move]()
-    let lastMove: Move? = boardState.performedMovesList.last?.move
+    let lastMove: Move? = boardState.lastMove
     generateAllPossibleMoves(bitboards: boardState.bitboards, currentColor: boardState.currentTurnColor, moves: &possibleMoves, lastMove: lastMove, castlesAvailable: boardState.castlesAvailable)
 
     

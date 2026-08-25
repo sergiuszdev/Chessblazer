@@ -34,7 +34,7 @@ func generateBlackPawnAttacks(blackPawns: Bitboard) -> Bitboard {
     return ((blackPawns >> 7) & ~Bitboard.Masks.fileA) | ((blackPawns >> 9) & ~Bitboard.Masks.fileH)
 }
 
-func generateWhitePawnMoves(bitboards: [Int: Bitboard], square: Int, moves: inout [Move], occupancy: Occupancy) {
+func generateWhitePawnMoves(bitboards: PieceBitboards, square: Int, moves: inout [Move], occupancy: Occupancy) {
     let empty = ~occupancy.all
     
     let pawn = Bitboard(1) << Bitboard(square)
@@ -70,7 +70,7 @@ func generateBlackPawnAttacks(square: Int) -> Bitboard {
     return generateBlackPawnAttacks(blackPawns: pawn)
 }
 
-func generateBlackPawnMoves(bitboards: [Int: Bitboard], square: Int, moves: inout [Move], occupancy: Occupancy) {
+func generateBlackPawnMoves(bitboards: PieceBitboards, square: Int, moves: inout [Move], occupancy: Occupancy) {
     let empty = ~occupancy.all
     
     let pawn = Bitboard(1 << square)
@@ -95,7 +95,7 @@ func generateBlackPawnMoves(bitboards: [Int: Bitboard], square: Int, moves: inou
     }
 }
 
-func generatePawnMoves(bitboards: [Int: Bitboard], currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
+func generatePawnMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
     if currentColor == .white {
         generateWhitePawnMoves(bitboards: bitboards, square: square, moves: &moves, occupancy: occupancy)
     } else {
@@ -111,13 +111,13 @@ func generatePawnAttacks(currentColor: Piece.Color, square: Int) -> Bitboard {
     }
 }
 
-func enPassantCheck(bitboards: [Int: Bitboard], lastMove: Move) -> [Move] {
+func enPassantCheck(bitboards: PieceBitboards, lastMove: Move) -> [Move] {
     var moves = Set<Move>()
     guard let from = lastMove.fromSquare, let target = lastMove.targetSquare else { return [Move]() }
     
     if lastMove.pieceValue == Piece.ColoredPieces.whitePawn.rawValue {
         if (8...15).contains(from) && (24...31).contains(target) {
-            var blackPawns = bitboards[Piece.ColoredPieces.blackPawn.rawValue]! & Bitboard.Masks.rank4
+            var blackPawns = bitboards[Piece.ColoredPieces.blackPawn.rawValue] & Bitboard.Masks.rank4
             while (blackPawns != 0) {
                 let blackPawn = Bitboard.popLSB(&blackPawns)
                 if blackPawn-1 == target || blackPawn+1 == target {
@@ -127,7 +127,7 @@ func enPassantCheck(bitboards: [Int: Bitboard], lastMove: Move) -> [Move] {
         }
     } else if lastMove.pieceValue == Piece.ColoredPieces.blackPawn.rawValue {
         if (48...55).contains(from) && (32...39).contains(target) {
-            var whitePawns = bitboards[Piece.ColoredPieces.whitePawn.rawValue]! & Bitboard.Masks.rank5
+            var whitePawns = bitboards[Piece.ColoredPieces.whitePawn.rawValue] & Bitboard.Masks.rank5
             while (whitePawns != 0) {
                 let whitePawn = Bitboard.popLSB(&whitePawns)
                 if whitePawn-1 == target || whitePawn+1 == target {

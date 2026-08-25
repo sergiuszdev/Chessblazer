@@ -6,33 +6,28 @@
 //
 
 import Foundation
-func emptySquaresBitboard(bitboards: [Int: Bitboard]) -> Bitboard {
-    var notEmpty = Bitboard(0)
-    for bitboard in bitboards {
-        notEmpty = notEmpty | bitboard.value
-    }
-    
-    return ~notEmpty
+
+func emptySquaresBitboard(bitboards: PieceBitboards) -> Bitboard {
+    return ~bitboards.occupancy().all
 }
 
-func getKingBitboard(bitboards: [Int: Bitboard], color: Piece.Color) -> Bitboard {
-    
+func getKingBitboard(bitboards: PieceBitboards, color: Piece.Color) -> Bitboard {
     if color == .white {
-        return bitboards[Piece.ColoredPieces.whiteKing.rawValue]!
+        return bitboards[Piece.ColoredPieces.whiteKing.rawValue]
     } else {
-        return bitboards[Piece.ColoredPieces.blackKing.rawValue]!
+        return bitboards[Piece.ColoredPieces.blackKing.rawValue]
     }
-    
 }
 
-func getPieceValueFromField(at field: Int, bitboards: [Piece.ColoredPieces.RawValue: Bitboard]) -> Piece.ColoredPieces.RawValue {
+func getPieceValueFromField(at field: Int, bitboards: PieceBitboards) -> Int {
     let b = Bitboard(1) << Bitboard(field)
-    for bitboard in bitboards {
-        if b & bitboard.value == b {
-            return bitboard.key
+    var captured = 0
+    bitboards.forEachOccupied { piece, board in
+        if captured == 0 && b & board == b {
+            captured = piece
         }
     }
-    return 0 // no capture
+    return captured
 }
 
 func checkIfCheck(boardState: BoardState) -> Bool {
