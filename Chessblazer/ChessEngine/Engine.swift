@@ -49,8 +49,13 @@ class Engine {
             if let move = bestMove {
                 print("bestmove \(moveToNotation(move: move))")
             }
+            // so go for dsl regex to capture all possible params and then handle it
+            // if no depth then lets say depth = 50 and make it async so you can send signal to stop with .stop
+            
             
         case .stop:
+            // here should be sent signal to stop searching for best move
+            
             print("")
         
         case .quit:
