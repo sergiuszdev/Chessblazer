@@ -95,18 +95,19 @@ final class SearchContext {
 }
 
 func countMaterial(bitboards: PieceBitboards) -> Int {
+    let phase = GamePhase.of(bitboards)
     var whiteSum = 0
     var blackSum = 0
     bitboards.forEachOccupied { piece, bitboard in
-        let table = PieceSquareTables.getTable(piece: piece)
         let pieceValue = PieceValueTable[piece] ?? 0
         var bitboardCopy = bitboard
         while bitboardCopy != 0 {
             let position = Bitboard.popLSB(&bitboardCopy)
+            let pst = PieceSquareTables.pieceSquareValue(piece: piece, square: position, phase: phase)
             if Piece.checkColor(piece: piece) == .white {
-                whiteSum += pieceValue + table[position]
+                whiteSum += pieceValue + pst
             } else {
-                blackSum += pieceValue - table[position]
+                blackSum += pieceValue - pst
             }
         }
     }

@@ -17,15 +17,46 @@ extension Array where Element == Int {
     }
 }
 
+enum GamePhase {
+    /// Startpos non-pawn material: 4 knights + 4 bishops + 4 rooks + 2 queens = 24.
+    static let full = 24
+    
+    static func weight(for piece: Int) -> Int {
+        switch Piece.getType(piece: piece) {
+        case .knight, .bishop: return 1
+        case .rook: return 2
+        case .queen: return 4
+        default: return 0
+        }
+    }
+    
+    static func of(_ bitboards: PieceBitboards) -> Int {
+        var phase = 0
+        bitboards.forEachOccupied { piece, board in
+            let unit = weight(for: piece)
+            if unit != 0 {
+                phase += unit * board.nonzeroBitCount
+            }
+        }
+        return min(phase, full)
+    }
+    
+    static func interpolate(middlegame: Int, endgame: Int, phase: Int) -> Int {
+        let clamped = min(Swift.max(phase, 0), full)
+        return (middlegame * clamped + endgame * (full - clamped)) / full
+    }
+}
+
 struct PieceSquareTables {
-    static func getTable(piece: Int, eval: Int = 0) -> [Int] {
+    static func getTable(piece: Int, phase: Int = GamePhase.full) -> [Int] {
+        if Piece.getType(piece: piece) == .king {
+            return (0..<64).map { pieceSquareValue(piece: piece, square: $0, phase: phase) }
+        }
         
         switch Piece.ColoredPieces(rawValue: piece) {
 
         case .some(.empty):
             return [Int]()
-        case .some(.blackKing):
-            return getKingTable(currentBoardEval: eval).mirrored()
         case .some(.blackPawn):
             return pawnTable.mirrored()
         case .some(.blackQueen):
@@ -36,8 +67,6 @@ struct PieceSquareTables {
             return bishopTable.mirrored()
         case .some(.blackRook):
             return rookTable.mirrored()
-        case .some(.whiteKing):
-            return getKingTable(currentBoardEval: eval)
         case .some(.whitePawn):
             return pawnTable
         case .some(.whiteQueen):
@@ -48,10 +77,24 @@ struct PieceSquareTables {
             return bishopTable
         case .some(.whiteRook):
             return rookTable
-        case .none:
+        default:
             return [Int]()
         }
-        
+    }
+    
+    static func pieceSquareValue(piece: Int, square: Int, phase: Int) -> Int {
+        guard (0..<64).contains(square) else { return 0 }
+        if Piece.getType(piece: piece) == .king {
+            let index = Piece.checkColor(piece: piece) == .white ? square : square ^ 56
+            return GamePhase.interpolate(
+                middlegame: kingMidgameTable[index],
+                endgame: kingEndgameTable[index],
+                phase: phase
+            )
+        }
+        let table = getTable(piece: piece)
+        guard square < table.count else { return 0 }
+        return table[square]
     }
     
     static let pawnTable: [Int] = [
@@ -130,14 +173,4 @@ struct PieceSquareTables {
        10,  20,  30,  40,  40,  30,  20,  10,
         0,  10,  20,  30,  30,  20,  10,   0
     ]
-    
-    static func getKingTable(currentBoardEval: Int) -> [Int] {
-//        for now 2000 should be enogh
-        if abs(currentBoardEval) < 2000 {
-            return kingEndgameTable
-        } else {
-            return kingMidgameTable
-        }
-    }
-    
 }
