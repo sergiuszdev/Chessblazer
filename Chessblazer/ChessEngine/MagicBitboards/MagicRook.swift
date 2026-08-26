@@ -13,7 +13,7 @@ let rookMagics: [UInt64] = [612489824209895456, 90073229503234056, 7206776478922
 
 class Rook {
     static let masks: [Bitboard] = generateRookMasks()
-    static let lookUpTable = createRookLookupTable()
+    static let lookUpTable: [[Bitboard]] = createRookLookupTable()
     
     static func generateRookMask(square: Int) -> Bitboard {
         
@@ -36,13 +36,10 @@ class Rook {
     }
     
 
-    static func hashKeyRook(blockerBitboard: Bitboard, square: Int) -> UInt64 {
+    static func hashKeyRook(blockerBitboard: Bitboard, square: Int) -> Int {
         let mask = masks[square]
         let maskedBlockers = blockerBitboard & mask
-        let magic = rookMagics[square]
-        let shift = rookShifts[square]
-        let of = maskedBlockers.multipliedReportingOverflow(by: magic)
-        return (of.0) >> shift
+        return magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: maskedBlockers)
     }
 
     
@@ -89,17 +86,15 @@ class Rook {
         }
         return legalMoves
     }
-    static func createRookLookupTable() -> [Int: [UInt64: Bitboard]] {
-        var rookMovesLookup: [Int: [UInt64: Bitboard]] = [:]
+    static func createRookLookupTable() -> [[Bitboard]] {
+        var rookMovesLookup = (0..<64).map { square in
+            Array(repeating: Bitboard(0), count: magicTableCount(shift: rookShifts[square]))
+        }
         for square in 0...63 {
-            rookMovesLookup[square] = [:]
-            let movementMask = masks[square]
-            let blockers = Magic.createAllBlockers(movementMask: movementMask)
-
+            let blockers = Magic.createAllBlockers(movementMask: masks[square])
             for blocker in blockers {
-                let legalMoves: Bitboard = createLegalMoves(square: square, blocker: blocker)
                 let key = hashKeyRook(blockerBitboard: blocker, square: square)
-                rookMovesLookup[square]![key] = legalMoves
+                rookMovesLookup[square][key] = createLegalMoves(square: square, blocker: blocker)
             }
         }
         return rookMovesLookup

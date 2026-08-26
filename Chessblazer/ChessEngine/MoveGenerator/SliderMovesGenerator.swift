@@ -7,9 +7,18 @@
 
 import Foundation
 
+func rawRookAttacks(square: Int, occupancy: Bitboard) -> Bitboard {
+    let blockerBitboard = occupancy & Rook.masks[square]
+    return Rook.lookUpTable[square][magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]
+}
+
+func rawBishopAttacks(square: Int, occupancy: Bitboard) -> Bitboard {
+    let blockerBitboard = occupancy & Bishop.masks[square]
+    return Bishop.lookUpTable[square][magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]
+}
+
 func generateRookMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
-    let blockerBitboard = occupancy.all & Rook.masks[square]
-    var movesBitboard = Rook.lookUpTable[square]![magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]!
+    var movesBitboard = rawRookAttacks(square: square, occupancy: occupancy.all)
     var pieceValue = 0
     
     if currentColor == .white {
@@ -26,8 +35,7 @@ func generateRookMoves(bitboards: PieceBitboards, currentColor: Piece.Color, squ
 }
 
 func generateRookMovesForQueen(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
-    let blockerBitboard = occupancy.all & Rook.masks[square]
-    var movesBitboard = Rook.lookUpTable[square]![magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]!
+    var movesBitboard = rawRookAttacks(square: square, occupancy: occupancy.all)
     var pieceValue = 0
     
     if currentColor == .white {
@@ -44,15 +52,11 @@ func generateRookMovesForQueen(bitboards: PieceBitboards, currentColor: Piece.Co
 }
 
 func generateRookAttacks(square: Int, friendlyBitboard: Bitboard, occupancy: Occupancy) -> Bitboard {
-    let blockerBitboard = occupancy.all & Rook.masks[square]
-    var movesBitboard = Rook.lookUpTable[square]![magicIndex(magic: rookMagics[square], shift: rookShifts[square], blocker: blockerBitboard)]!
-    movesBitboard = movesBitboard & ~friendlyBitboard
-    return movesBitboard
+    return rawRookAttacks(square: square, occupancy: occupancy.all) & ~friendlyBitboard
 }
 
 func generateBishopMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
-    let blockerBitboard = occupancy.all & Bishop.masks[square]
-    var movesBitboard = Bishop.lookUpTable[square]![magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]!
+    var movesBitboard = rawBishopAttacks(square: square, occupancy: occupancy.all)
     
     var pieceValue = 0
     if currentColor == .white {
@@ -70,8 +74,7 @@ func generateBishopMoves(bitboards: PieceBitboards, currentColor: Piece.Color, s
 }
 
 func generateBishopMovesForQueen(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {
-    let blockerBitboard = occupancy.all & Bishop.masks[square]
-    var movesBitboard = Bishop.lookUpTable[square]![magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]!
+    var movesBitboard = rawBishopAttacks(square: square, occupancy: occupancy.all)
     
     var pieceValue = 0
     if currentColor == .white {
@@ -89,10 +92,7 @@ func generateBishopMovesForQueen(bitboards: PieceBitboards, currentColor: Piece.
 }
 
 func generateBishopAttacks(square: Int, friendlyBitboard: Bitboard, occupancy: Occupancy) -> Bitboard {
-    let blockerBitboard = occupancy.all & Bishop.masks[square]
-    var movesBitboard = Bishop.lookUpTable[square]![magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)]!
-    movesBitboard = movesBitboard & ~friendlyBitboard
-    return movesBitboard
+    return rawBishopAttacks(square: square, occupancy: occupancy.all) & ~friendlyBitboard
 }
 
 func generateQueenMoves(bitboards: PieceBitboards, currentColor: Piece.Color, square: Int, moves: inout [Move], occupancy: Occupancy) {

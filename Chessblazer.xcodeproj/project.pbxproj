@@ -93,6 +93,9 @@
 		31B10B412CB848D40077E27A /* GeneratorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B3F2CB848D40077E27A /* GeneratorUtils.swift */; };
 		31B10B482CB89B780077E27A /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B472CB89B780077E27A /* GameEngine.swift */; };
 		31B10B4A2CB8A0AF0077E27A /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B10B472CB89B780077E27A /* GameEngine.swift */; };
+		31C0C01582D484A88000CCDF /* PinCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C0C0157CB83F7B0077E27A /* PinCheck.swift */; };
+		31C0C01592CB83F7B0077E27 /* PinCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C0C0157CB83F7B0077E27A /* PinCheck.swift */; };
+		31C0C015A2C55B0C4002F1E4 /* PinCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C0C0157CB83F7B0077E27A /* PinCheck.swift */; };
 		31EF3B422C5E7DB600DF07A3 /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EF3B412C5E7DB600DF07A3 /* GameState.swift */; };
 		31EF3B442C5E810400DF07A3 /* BoardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EF3B432C5E810400DF07A3 /* BoardUtils.swift */; };
 		31EF3B602C61873300DF07A3 /* Evaluation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EF3B5F2C61873300DF07A3 /* Evaluation.swift */; };
@@ -154,6 +157,7 @@
 		31B10B3B2CB846F90077E27A /* KnightMovesGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnightMovesGenerator.swift; sourceTree = "<group>"; };
 		31B10B3F2CB848D40077E27A /* GeneratorUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorUtils.swift; sourceTree = "<group>"; };
 		31B10B472CB89B780077E27A /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
+		31C0C0157CB83F7B0077E27A /* PinCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinCheck.swift; sourceTree = "<group>"; };
 		31CB05332C8D186A007C4A1A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		31CB05352C8D1DBB007C4A1A /* showcase.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = showcase.gif; sourceTree = "<group>"; };
 		31EF3B412C5E7DB600DF07A3 /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
@@ -207,6 +211,7 @@
 				31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */,
 				318129242C530BB0002F1E40 /* Move.swift */,
 				317F008F2C584924000E4AD6 /* GenerateMoves.swift */,
+				31C0C0157CB83F7B0077E27A /* PinCheck.swift */,
 				3147A5F12C8911DD007E132F /* PawnMovesGenerator.swift */,
 				31B10B2F2CB846C30077E27A /* KingMovesGenerator.swift */,
 				31B10B372CB846E60077E27A /* SliderMovesGenerator.swift */,
@@ -481,6 +486,7 @@
 				3103B6B52D484A88000CCDFA /* UciUtils.swift in Sources */,
 				3103B6B62D484A88000CCDFA /* Move.swift in Sources */,
 				3103B6B72D484A88000CCDFA /* GenerateMoves.swift in Sources */,
+				31C0C01582D484A88000CCDF /* PinCheck.swift in Sources */,
 				3103B6B82D484A88000CCDFA /* PawnMovesGenerator.swift in Sources */,
 				3103B6B92D484A88000CCDFA /* KingMovesGenerator.swift in Sources */,
 				3103B6BA2D484A88000CCDFA /* SliderMovesGenerator.swift in Sources */,
@@ -518,6 +524,7 @@
 				31B0111592CB83F7B0077E27 /* TranspositionTable.swift in Sources */,
 				31EF3B682C622DE300DF07A3 /* PieceSquareTables.swift in Sources */,
 				317F00902C584924000E4AD6 /* GenerateMoves.swift in Sources */,
+				31C0C01592CB83F7B0077E27 /* PinCheck.swift in Sources */,
 				318129132C51B369002F1E40 /* EngineApp.swift in Sources */,
 				317F00942C59521E000E4AD6 /* Magic.swift in Sources */,
 				31B10B392CB846E60077E27A /* SliderMovesGenerator.swift in Sources */,
@@ -552,6 +559,7 @@
 				3147A5F02C890A1E007E132F /* ChessView.swift in Sources */,
 				31ADBF3B2C5B05F600A97097 /* BitboardOperations.swift in Sources */,
 				31ADBF3C2C5B05F600A97097 /* GenerateMoves.swift in Sources */,
+				31C0C015A2C55B0C4002F1E4 /* PinCheck.swift in Sources */,
 				31B10B312CB846C30077E27A /* KingMovesGenerator.swift in Sources */,
 				3181293E2C56DAA4002F1E40 /* BoardPrinter.swift in Sources */,
 				3181293F2C56DAA4002F1E40 /* Pieces.swift in Sources */,

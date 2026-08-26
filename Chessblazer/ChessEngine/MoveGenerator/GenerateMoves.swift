@@ -7,11 +7,13 @@
 
 import Foundation
 
-func generateAllPossibleMoves(bitboards: PieceBitboards, currentColor: Piece.Color, moves: inout [Move], lastMove: Move?, castlesAvailable: Set<Character>) {
+func generateAllPossibleMoves(bitboards: PieceBitboards, currentColor: Piece.Color, moves: inout [Move], lastMove: Move?, castlesAvailable: Set<Character>, includeKingAndCastles: Bool = true) {
     
     moves.removeAll()
     let occupancy = Occupancy.from(bitboards: bitboards)
-    let attackedSquares = generateAllAttackedSquares(bitboards: bitboards, currentColor: currentColor, occupancy: occupancy)
+    let attackedSquares = includeKingAndCastles
+        ? generateAllAttackedSquares(bitboards: bitboards, currentColor: currentColor, occupancy: occupancy)
+        : 0
     
     if let lastMove = lastMove {
         let enPassantMoves = enPassantCheck(bitboards: bitboards, lastMove: lastMove)
@@ -41,7 +43,7 @@ func generateAllPossibleMoves(bitboards: PieceBitboards, currentColor: Piece.Col
                 case .pawn:
                     generatePawnMoves(bitboards: bitboards, currentColor: currentColor, square: square, moves: &moves, occupancy: occupancy)
                 case .king:
-                    if !generatedKingMoves {
+                    if includeKingAndCastles && !generatedKingMoves {
                         generateKingMovesBitboard(bitboards: bitboards, currentColor: currentColor, moves: &moves, occupancy: occupancy, attackedSquares: attackedSquares)
                         generateCastles(bitboards: bitboards, currentColor: currentColor, moves: &moves, castlesAvailable: castlesAvailable, occupancy: occupancy, attackedSquares: attackedSquares)
                         generatedKingMoves = true
@@ -103,18 +105,49 @@ func generateAllAttackedSquares(bitboards: PieceBitboards, currentColor: Piece.C
 }
 
 func generateAllLegalMoves(boardState: BoardState) -> [Move] {
+    guard let info = PinCheckInfo.compute(boardState: boardState) else { return [] }
+    
+    var legalMoves = [Move]()
+    let occupancy = boardState.occupancy
+    generateKingMovesBitboard(
+        bitboards: boardState.bitboards,
+        currentColor: boardState.currentTurnColor,
+        moves: &legalMoves,
+        occupancy: occupancy,
+        attackedSquares: info.unsafe
+    )
+    if info.doubleCheck {
+        return legalMoves
+    }
+    if !info.inCheck {
+        generateCastles(
+            bitboards: boardState.bitboards,
+            currentColor: boardState.currentTurnColor,
+            moves: &legalMoves,
+            castlesAvailable: boardState.castlesAvailable,
+            occupancy: occupancy,
+            attackedSquares: info.unsafe
+        )
+    }
     
     var possibleMoves = [Move]()
-    var legalMoves = [Move]()
-    let lastMove: Move? = boardState.lastMove
-    generateAllPossibleMoves(bitboards: boardState.bitboards, currentColor: boardState.currentTurnColor, moves: &possibleMoves, lastMove: lastMove, castlesAvailable: boardState.castlesAvailable)
-
+    generateAllPossibleMoves(
+        bitboards: boardState.bitboards,
+        currentColor: boardState.currentTurnColor,
+        moves: &possibleMoves,
+        lastMove: boardState.lastMove,
+        castlesAvailable: boardState.castlesAvailable,
+        includeKingAndCastles: false
+    )
     
     for move in possibleMoves {
-        let newState = GameEngine.makeMoveOnly(boardState: boardState, move: move)
-        if !checkIfCheck(boardState: newState) {
-            legalMoves.append(move)
+        guard let from = move.fromSquare, let to = move.targetSquare else { continue }
+        guard info.allowsNonKingMove(from: from, to: to, capturedEP: move.enPasssantCapture) else { continue }
+        if move.enPasssantCapture != 0
+            && !isEnPassantLegal(bitboards: boardState.bitboards, color: boardState.currentTurnColor, move: move) {
+            continue
         }
+        legalMoves.append(move)
     }
     
     return legalMoves
