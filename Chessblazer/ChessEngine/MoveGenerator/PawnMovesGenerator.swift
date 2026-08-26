@@ -37,7 +37,7 @@ func generateBlackPawnAttacks(blackPawns: Bitboard) -> Bitboard {
 func generateWhitePawnMoves(bitboards: PieceBitboards, square: Int, moves: inout [Move], occupancy: Occupancy) {
     let empty = ~occupancy.all
     
-    let pawn = Bitboard(1) << Bitboard(square)
+    let pawn = Bitboard.bit(at: square)
     var movesBitboard = whitePawnOnePush(whitePawns: pawn, emptySquares: empty) | whitePawnDoublePush(whitePawns: pawn, emptySquares: empty) | (generateWhitePawnAttacks(whitePawns: pawn) & occupancy.black)
     
     while movesBitboard != 0 {
@@ -61,19 +61,17 @@ func generateWhitePawnMoves(bitboards: PieceBitboards, square: Int, moves: inout
 }
 
 func generateWhitePawnAttacks(square: Int) -> Bitboard {
-    let pawn = UInt64(1) << square
-    return generateWhitePawnAttacks(whitePawns: pawn)
+    generateWhitePawnAttacks(whitePawns: .bit(at: square))
 }
 
 func generateBlackPawnAttacks(square: Int) -> Bitboard {
-    let pawn = Bitboard(1 << square)
-    return generateBlackPawnAttacks(blackPawns: pawn)
+    generateBlackPawnAttacks(blackPawns: .bit(at: square))
 }
 
 func generateBlackPawnMoves(bitboards: PieceBitboards, square: Int, moves: inout [Move], occupancy: Occupancy) {
     let empty = ~occupancy.all
     
-    let pawn = Bitboard(1 << square)
+    let pawn = Bitboard.bit(at: square)
     var movesBitboard = blackPawnOnePush(blackPawns: pawn, emptySquares: empty) | blackPawnDoublePush(blackPawns: pawn, emptySquares: empty) | (generateBlackPawnAttacks(blackPawns: pawn) & occupancy.white)
     while movesBitboard != 0 {
         let targetSquare: Int = Bitboard.popLSB(&movesBitboard)

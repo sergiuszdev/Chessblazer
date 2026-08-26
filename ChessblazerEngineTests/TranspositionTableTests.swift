@@ -44,6 +44,13 @@ struct TranspositionTableTests {
         #expect(TranspositionTable.scoreFromTT(storedLoss, ply: 1) == -MATE_VALUE + 1)
     }
     
+    @Test func extremeScoresDoNotOverflowWhenAdjusted() {
+        #expect(TranspositionTable.scoreToTT(Int.min, ply: 3) == Int.min)
+        #expect(TranspositionTable.scoreToTT(Int.max, ply: 3) == Int.max)
+        #expect(TranspositionTable.scoreFromTT(Int.min, ply: 3) == Int.min)
+        #expect(TranspositionTable.scoreFromTT(Int.max, ply: 3) == Int.max)
+    }
+    
     @Test func orderMovesPutsHashMoveFirst() {
         let a = Move(fromSquare: 0, targetSquare: 8, pieceValue: 0, captureValue: 0)
         let b = Move(fromSquare: 1, targetSquare: 17, pieceValue: 0, captureValue: 0)

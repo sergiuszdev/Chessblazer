@@ -7,7 +7,11 @@
 
 import Foundation
 
-func magicIndex(magic: UInt64, shift: Int, blocker: Bitboard) -> UInt64 {
+func magicIndex(magic: UInt64, shift: Int, blocker: Bitboard) -> Int {
     let hash = blocker.multipliedReportingOverflow(by: magic)
-    return hash.0 >> shift
+    return Int(hash.0 >> shift)
+}
+
+func magicTableCount(shift: Int) -> Int {
+    1 << (64 - shift)
 }

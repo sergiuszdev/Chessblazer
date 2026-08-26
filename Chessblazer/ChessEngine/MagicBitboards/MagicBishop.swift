@@ -13,7 +13,7 @@ let bishopShifts: [Int] = [57, 57, 57, 57, 57, 57, 57, 57, 57, 55, 55, 55, 55, 5
 class Bishop {
     static let masks: [Bitboard] = generateBishopMasks()
     
-    static let lookUpTable: [Int: [UInt64: Bitboard]] = createBishopLookupTable()
+    static let lookUpTable: [[Bitboard]] = createBishopLookupTable()
 
     static func generateBishopMask(square: Int) -> Bitboard {
         let rank = square / 8
@@ -49,25 +49,19 @@ class Bishop {
         return bishopMasks
     }
     
-    static func hashKeyBishop(blockerBitboard: Bitboard, square: Int) -> UInt64 {
-        let magic = bishopMagics[square]
-        let shift = bishopShifts[square]
-        let of = blockerBitboard.multipliedReportingOverflow(by: magic)
-        return (of.0) >> shift
+    static func hashKeyBishop(blockerBitboard: Bitboard, square: Int) -> Int {
+        magicIndex(magic: bishopMagics[square], shift: bishopShifts[square], blocker: blockerBitboard)
     }
     
-    static func createBishopLookupTable() -> [Int: [UInt64: Bitboard]] {
-        var bishopMovesLookup: [Int: [UInt64: Bitboard]] = [:]
-        
-        
+    static func createBishopLookupTable() -> [[Bitboard]] {
+        var bishopMovesLookup = (0..<64).map { square in
+            Array(repeating: Bitboard(0), count: magicTableCount(shift: bishopShifts[square]))
+        }
         for square in 0...63 {
-            bishopMovesLookup[square] = [:]
-            let movementMask = masks[square] //ok
-            let blockers = Magic.createAllBlockers(movementMask: movementMask) // raczej ok
-
+            let blockers = Magic.createAllBlockers(movementMask: masks[square])
             for blocker in blockers {
-                let legalMoves: Bitboard = createLegalMoves(square: square, blocker: blocker)
-                bishopMovesLookup[square]![hashKeyBishop(blockerBitboard: blocker, square: square)] = legalMoves
+                let key = hashKeyBishop(blockerBitboard: blocker, square: square)
+                bishopMovesLookup[square][key] = createLegalMoves(square: square, blocker: blocker)
             }
         }
         return bishopMovesLookup
@@ -93,9 +87,10 @@ class Bishop {
                 }
                 
                 let newSquare = currentRow * 8 + currentCol
-                legalMoves = Bitboard(legalMoves | 1 << newSquare)
+                let bit = Bitboard.bit(at: newSquare)
+                legalMoves |= bit
                 
-                if (blocker & (1 << newSquare)) != 0 {
+                if blocker & bit != 0 {
                     break
                 }
             }
