@@ -9,10 +9,8 @@
 // https://www.chessprogramming.org/Perft_Results
 
 /*
-    use bulkPerftTest for expected nodes < 1 000 000
-    use perftTest for detailed tests
- 
- 
+    use bulkPerftTest for node counts
+    use perftTest for detailed move-type counts
  */
 
 import Testing
@@ -26,6 +24,7 @@ struct Perft_Initial_Position {
         (depth: 3, expectedNodes: 8902),
         (depth: 4, expectedNodes: 197281),
         (depth: 5, expectedNodes: 4865609),
+        (depth: 6, expectedNodes: 119060324),
     ])
     func testNodes(depth: Int, expectedNodes: Int) async throws {
         let timer = ContinuousClock().now
@@ -41,6 +40,7 @@ struct Perft_Initial_Position {
         (depth: 2, expectedNodes: 400, expectedData: PerftData(captures: 0, enPassants: 0, castles: 0, checks: 0, checkmates: 0, promotions: 0)),
         (depth: 3, expectedNodes: 8902, expectedData: PerftData(captures: 34, enPassants: 0, castles: 0, checks: 12, checkmates: 0, promotions: 0)),
         (depth: 4, expectedNodes: 197281, expectedData: PerftData(captures: 1576, enPassants: 0, castles: 0, checks: 469, checkmates: 8, promotions: 0)),
+        (depth: 5, expectedNodes: 4865609, expectedData: PerftData(captures: 82719, enPassants: 258, castles: 0, checks: 27351, checkmates: 347, promotions: 0)),
     ])
     func testDetails(depth: Int, expectedNodes: Int, expectedData: PerftData) async throws {
         let timer = ContinuousClock().now

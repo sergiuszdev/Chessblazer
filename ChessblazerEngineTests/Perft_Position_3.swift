@@ -1,5 +1,5 @@
 //
-//  Perft_Kiwipete.swift
+//  Perft_Position_3.swift
 //  ChessblazerEngineTests
 //
 //  Created by sergiusz on 29/01/2025.
@@ -34,6 +34,7 @@ struct Perft_Position_3 {
         
         (depth: 4, expectedNodes: 43238, expectedData: PerftData(captures: 3348, enPassants: 123, castles: 0, checks: 1680, checkmates: 17, promotions: 0)),
         (depth: 5, expectedNodes: 674624, expectedData: PerftData(captures: 52051, enPassants: 1165, castles: 0, checks: 52950, checkmates: 0, promotions: 0)),
+        (depth: 6, expectedNodes: 11030083, expectedData: PerftData(captures: 940350, enPassants: 33325, castles: 0, checks: 452473, checkmates: 2733, promotions: 7552)),
     ])
     func testDetails(depth: Int, expectedNodes: Int, expectedData: PerftData) async throws {
         let timer = ContinuousClock().now

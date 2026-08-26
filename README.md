@@ -119,6 +119,11 @@ To execute the performance tests, run the 'Performance Tests' suite
     <td>4085603</td>
     <td>✅</td>
   </tr>
+  <tr>
+    <td>5</td>
+    <td>193690690</td>
+    <td>✅</td>
+  </tr>
 </table>
 
 ### Position 3
@@ -190,6 +195,69 @@ To execute the performance tests, run the 'Performance Tests' suite
     <tr>
     <td>5</td>
     <td>15833292</td>
+    <td>✅</td>
+  </tr>
+</table>
+
+### Position 5
+<table>
+   <tr>
+    <th>Depth</th>
+    <th>Nodes</th>
+    <th>Passed</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>44</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>1486</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>62379</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>2103487</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>89941194</td>
+    <td>✅</td>
+  </tr>
+</table>
+
+### Position 6
+<table>
+   <tr>
+    <th>Depth</th>
+    <th>Nodes</th>
+    <th>Passed</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>46</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>2079</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>89890</td>
+    <td>✅</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>3894594</td>
     <td>✅</td>
   </tr>
 </table>

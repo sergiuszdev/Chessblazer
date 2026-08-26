@@ -9,7 +9,7 @@ import Foundation
 
 final class Engine: @unchecked Sendable {
     let engineName = "Chessblazer"
-    let engineVersion = "alpha 0.001"
+    let engineVersion = "alpha 0.002"
     var quit = false
     let engineAuthor = "sergiusz"
     
