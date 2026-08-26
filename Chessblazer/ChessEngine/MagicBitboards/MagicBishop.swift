@@ -87,9 +87,10 @@ class Bishop {
                 }
                 
                 let newSquare = currentRow * 8 + currentCol
-                legalMoves = Bitboard(legalMoves | 1 << newSquare)
+                let bit = Bitboard.bit(at: newSquare)
+                legalMoves |= bit
                 
-                if (blocker & (1 << newSquare)) != 0 {
+                if blocker & bit != 0 {
                     break
                 }
             }

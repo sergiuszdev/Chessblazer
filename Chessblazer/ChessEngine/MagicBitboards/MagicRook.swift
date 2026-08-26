@@ -52,8 +52,9 @@ class Rook {
         // North
         for r in (0..<rank).reversed() {
             let targetSquare = r * 8 + file
-            legalMoves = legalMoves | Bitboard(1) << Bitboard(targetSquare)
-            if (blocker & (1 << targetSquare)) != 0 {
+            let bit = Bitboard.bit(at: targetSquare)
+            legalMoves |= bit
+            if blocker & bit != 0 {
                 break
             }
         }
@@ -61,8 +62,9 @@ class Rook {
         // South
         for r in (rank+1..<8) {
             let targetSquare = r * 8 + file
-            legalMoves = legalMoves | Bitboard(1) << Bitboard(targetSquare)
-            if (blocker & (1 << targetSquare)) != 0 {
+            let bit = Bitboard.bit(at: targetSquare)
+            legalMoves |= bit
+            if blocker & bit != 0 {
                 break
             }
         }
@@ -70,8 +72,9 @@ class Rook {
         // West
         for f in (0..<file).reversed() {
             let targetSquare = rank * 8 + f
-            legalMoves = legalMoves | Bitboard(1) << Bitboard(targetSquare)
-            if (blocker & (1 << targetSquare)) != 0 {
+            let bit = Bitboard.bit(at: targetSquare)
+            legalMoves |= bit
+            if blocker & bit != 0 {
                 break
             }
         }
@@ -79,8 +82,9 @@ class Rook {
         // East
         for f in (file+1..<8) {
             let targetSquare = rank * 8 + f
-            legalMoves = legalMoves | Bitboard(1) << Bitboard(targetSquare)
-            if (blocker & (1 << targetSquare)) != 0 {
+            let bit = Bitboard.bit(at: targetSquare)
+            legalMoves |= bit
+            if blocker & bit != 0 {
                 break
             }
         }
