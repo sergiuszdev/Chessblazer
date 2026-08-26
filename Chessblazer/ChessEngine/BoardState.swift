@@ -350,6 +350,29 @@ public struct BoardState {
             currentValidMoves = moves
         }
     }
+    
+    /// Draw if this position occurred twice in game history (threefold), or once
+    /// strictly after the search root (`distance < ply`) so search will not loop.
+    func isRepetitionDraw(ply: Int = 0) -> Bool {
+        var matches = 0
+        var distance = 0
+        for undo in undoStack.reversed() {
+            distance += 1
+            if undo.move == nil {
+                break
+            }
+            guard distance % 2 == 0 else { continue }
+            guard undo.zobristKey == zobristKey else { continue }
+            if distance < ply {
+                return true
+            }
+            matches += 1
+            if matches >= 2 {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 public enum GameResult {

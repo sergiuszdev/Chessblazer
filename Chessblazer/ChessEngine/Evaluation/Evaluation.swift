@@ -367,6 +367,10 @@ func alphabeta(
         return evaluate(bitboards: game.boardState.bitboards)
     }
     
+    if game.boardState.isRepetitionDraw(ply: ply) {
+        return 0
+    }
+    
     if depth <= 0 {
         return quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: maximizingPlayer, ply: ply, qsPly: 0, context: context)
     }

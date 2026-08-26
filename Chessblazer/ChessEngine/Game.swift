@@ -32,10 +32,7 @@ public final class Game {
     
     public func undoMove() {
         boardState.unplay()
-        if !boardState.currentValidMoves.isEmpty {
-            boardData.hasGameEnded = false
-            boardData.gameResult = .none
-        }
+        updateGameResult()
     }
     
     public func play(_ move: Move) {
@@ -81,6 +78,10 @@ public final class Game {
             occupancy: boardState.occupancy
         )
         boardState.currentValidMoves = generateAllLegalMoves(boardState: boardState)
+        updateGameResult()
+    }
+    
+    private func updateGameResult() {
         if boardState.currentValidMoves.isEmpty {
             boardData.hasGameEnded = true
             if isWhiteKingChecked(boardState: boardState) {
@@ -90,6 +91,9 @@ public final class Game {
             } else {
                 boardData.gameResult = .draw
             }
+        } else if boardState.isRepetitionDraw() {
+            boardData.hasGameEnded = true
+            boardData.gameResult = .draw
         } else {
             boardData.hasGameEnded = false
             boardData.gameResult = .none
