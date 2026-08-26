@@ -114,7 +114,7 @@ func countMaterial(bitboards: PieceBitboards, phase: Int? = nil) -> Int {
     return whiteSum + blackSum
 }
 
-func evaluate(bitboards: PieceBitboards) -> Int {
+public func evaluate(bitboards: PieceBitboards) -> Int {
     let occupancy = Occupancy.from(bitboards: bitboards)
     let phase = GamePhase.of(bitboards)
     return countMaterial(bitboards: bitboards, phase: phase)
@@ -649,7 +649,7 @@ func quiesce(game: Game, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int
     }
 }
 
-func findBestMove(game: Game, depth: Int, maximizingPlayer: Bool) -> Move? {
+public func findBestMove(game: Game, depth: Int, maximizingPlayer: Bool) -> Move? {
     return findBestMove(game: game, limits: SearchLimits(maxDepth: depth, allocatedTime: nil), maximizingPlayer: maximizingPlayer)
 }
 

@@ -14,6 +14,9 @@
  */
 
 import Testing
+#if SWIFT_PACKAGE
+@testable import Chessblazer
+#endif
 
 @Suite("Perft tests // Initial")
 struct Perft_Initial_Position {

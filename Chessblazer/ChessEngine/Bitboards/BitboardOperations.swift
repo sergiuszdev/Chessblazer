@@ -9,7 +9,7 @@ import Foundation
 
 extension Bitboard {
     @inline(__always)
-    static func bit(at square: Int) -> Bitboard {
+    public static func bit(at square: Int) -> Bitboard {
         guard (0..<64).contains(square) else { return 0 }
         return Bitboard(1) << Bitboard(square)
     }
@@ -30,7 +30,7 @@ extension Bitboard {
         return self >> 8
     }
     
-    static func popLSB(_ bitboard: inout Bitboard) -> Int {
+    public static func popLSB(_ bitboard: inout Bitboard) -> Int {
         let lsb = bitboard & (~bitboard + 1)
         bitboard = bitboard & ~Bitboard(lsb)
         return lsb.trailingZeroBitCount

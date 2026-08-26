@@ -1,4 +1,7 @@
 import Testing
+#if SWIFT_PACKAGE
+@testable import Chessblazer
+#endif
 
 @Suite("Zobrist")
 struct ZobristTests {

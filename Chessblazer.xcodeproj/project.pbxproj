@@ -130,7 +130,7 @@
 		317F008F2C584924000E4AD6 /* GenerateMoves.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateMoves.swift; sourceTree = "<group>"; };
 		317F00932C59521E000E4AD6 /* Magic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Magic.swift; sourceTree = "<group>"; };
 		3181290F2C51B369002F1E40 /* Chessblazer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Chessblazer; sourceTree = BUILT_PRODUCTS_DIR; };
-		318129122C51B369002F1E40 /* EngineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineApp.swift; sourceTree = "<group>"; };
+		318129122C51B369002F1E40 /* EngineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EngineApp.swift; path = ChessblazerUCI/EngineApp.swift; sourceTree = SOURCE_ROOT; };
 		3181291A2C51B3EC002F1E40 /* Pieces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pieces.swift; sourceTree = "<group>"; };
 		3181291E2C51B803002F1E40 /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 		318129202C5277FA002F1E40 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
@@ -247,7 +247,7 @@
 				31CB05342C8D1D9E007C4A1A /* res */,
 				31CB05332C8D186A007C4A1A /* README.md */,
 				318129112C51B369002F1E40 /* Chessblazer */,
-				3181292E2C55B0C4002F1E40 /* ChessblazerGUI */,
+				318129122C51B369002F1E40 /* EngineApp.swift */,
 				3103B6A52D4849B3000CCDFA /* ChessblazerEngineTests */,
 				318129102C51B369002F1E40 /* Products */,
 				31EF3B4A2C61676200DF07A3 /* Frameworks */,
@@ -258,7 +258,6 @@
 			isa = PBXGroup;
 			children = (
 				3181290F2C51B369002F1E40 /* Chessblazer */,
-				3181292D2C55B0C4002F1E40 /* ChessblazerGUI.app */,
 				3103B6A42D4849B3000CCDFA /* ChessblazerEngineTests.xctest */,
 			);
 			name = Products;
@@ -268,7 +267,6 @@
 			isa = PBXGroup;
 			children = (
 				318129192C51B389002F1E40 /* ChessEngine */,
-				318129122C51B369002F1E40 /* EngineApp.swift */,
 				315404582C8A103D00370831 /* todo.md */,
 			);
 			path = Chessblazer;
@@ -425,9 +423,6 @@
 					3181290E2C51B369002F1E40 = {
 						CreatedOnToolsVersion = 15.4;
 					};
-					3181292C2C55B0C4002F1E40 = {
-						CreatedOnToolsVersion = 15.4;
-					};
 				};
 			};
 			buildConfigurationList = 3181290A2C51B369002F1E40 /* Build configuration list for PBXProject "Chessblazer" */;
@@ -444,7 +439,6 @@
 			projectRoot = "";
 			targets = (
 				3181290E2C51B369002F1E40 /* Chessblazer */,
-				3181292C2C55B0C4002F1E40 /* ChessblazerGUI */,
 				3103B6A32D4849B3000CCDFA /* ChessblazerEngineTests */,
 			);
 		};

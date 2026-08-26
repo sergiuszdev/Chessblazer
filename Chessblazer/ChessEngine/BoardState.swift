@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct Occupancy: Equatable {
-    var white: Bitboard = 0
-    var black: Bitboard = 0
+public struct Occupancy: Equatable {
+    public var white: Bitboard = 0
+    public var black: Bitboard = 0
     
-    var all: Bitboard { white | black }
+    public var all: Bitboard { white | black }
     
     func friendly(for color: Piece.Color) -> Bitboard {
         color == .white ? white : black
@@ -26,7 +26,7 @@ struct Occupancy: Equatable {
     }
 }
 
-struct PieceBitboards {
+public struct PieceBitboards {
     static let slotCount = 12
     private var slots = [Bitboard](repeating: 0, count: slotCount)
     
@@ -90,17 +90,21 @@ struct UndoInfo {
     var currentValidMoves: [Move]?
 }
 
-struct BoardState {
-    var attackBitboard = Bitboard(0)
-    var occupancy = Occupancy()
+public struct BoardState {
+    public var attackBitboard = Bitboard(0)
+    public var occupancy = Occupancy()
     var undoStack = [UndoInfo]()
-    var lastMove: Move? = nil
-    var castlesAvailable: Set<Character> = []
-    var currentTurnColor: Piece.Color
-    var bitboards = PieceBitboards()
-    var enPassant = "-"
-    var zobristKey: UInt64 = 0
-    var currentValidMoves: [Move] = [Move]()
+    public var lastMove: Move? = nil
+    public var castlesAvailable: Set<Character> = []
+    public var currentTurnColor: Piece.Color
+    public var bitboards = PieceBitboards()
+    public var enPassant = "-"
+    public var zobristKey: UInt64 = 0
+    public var currentValidMoves: [Move] = [Move]()
+    
+    public init(currentTurnColor: Piece.Color) {
+        self.currentTurnColor = currentTurnColor
+    }
     
     mutating func refreshOccupancy() {
         occupancy = bitboards.occupancy()
@@ -348,12 +352,14 @@ struct BoardState {
     }
 }
 
-enum GameResult {
+public enum GameResult {
     case white, black, draw, none
 }
 
-struct BoardData {
-    var halfMoves = 0
-    var hasGameEnded = false
-    var gameResult: GameResult = .none
+public struct BoardData {
+    public var halfMoves = 0
+    public var hasGameEnded = false
+    public var gameResult: GameResult = .none
+    
+    public init() {}
 }

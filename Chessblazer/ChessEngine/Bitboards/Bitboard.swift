@@ -6,7 +6,7 @@
 //
 // special thanks to https://www.magnuskahr.dk/posts/2019/10/bitboards-in-swift/
 import Foundation
-typealias Bitboard = UInt64
+public typealias Bitboard = UInt64
 
 extension UInt64 {
     struct Masks {

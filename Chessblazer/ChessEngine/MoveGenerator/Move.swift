@@ -7,28 +7,28 @@
 
 import Foundation
 
-struct Move: Equatable, Hashable, Comparable, Codable {
+public struct Move: Equatable, Hashable, Comparable, Codable {
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(fromSquare!+targetSquare!+enPasssantCapture)
     }
     
-    var castlingRookOrigin = 0
-    var castlingRookDestination = 0
-    var castlingKingDestination = 0
-    var promotionPiece: Int = 0
-    var enPasssantCapture = 0
-    var pieceValue: Int = 0
-    var captureValue = 0
+    public var castlingRookOrigin = 0
+    public var castlingRookDestination = 0
+    public var castlingKingDestination = 0
+    public var promotionPiece: Int = 0
+    public var enPasssantCapture = 0
+    public var pieceValue: Int = 0
+    public var captureValue = 0
     
-    var fromSquare: Int?
-    var targetSquare: Int?
+    public var fromSquare: Int?
+    public var targetSquare: Int?
     
     
-    var castling: Bool { castlingRookDestination != 0 || castlingKingDestination != 0}
+    public var castling: Bool { castlingRookDestination != 0 || castlingKingDestination != 0}
 
     
-    init(fromSquare: Int, targetSquare: Int, enPasssantCapture: Int, pieceValue: Int, captureValue: Int) {
+    public init(fromSquare: Int, targetSquare: Int, enPasssantCapture: Int, pieceValue: Int, captureValue: Int) {
         self.fromSquare = fromSquare
         self.targetSquare = targetSquare
         self.enPasssantCapture = enPasssantCapture
@@ -36,14 +36,14 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         self.captureValue = captureValue
     }
     
-    init(fromSquare: Int, targetSquare: Int, pieceValue: Int,  captureValue: Int) {
+    public init(fromSquare: Int, targetSquare: Int, pieceValue: Int,  captureValue: Int) {
         self.fromSquare = fromSquare
         self.targetSquare = targetSquare
         self.captureValue = captureValue
         self.pieceValue = pieceValue
     }
     
-    init(fromSquare: Int, targetSquare: Int, pieceValue: Int,  captureValue: Int, promotionPiece: Int) {
+    public init(fromSquare: Int, targetSquare: Int, pieceValue: Int,  captureValue: Int, promotionPiece: Int) {
         self.fromSquare = fromSquare
         self.targetSquare = targetSquare
         self.captureValue = captureValue
@@ -51,7 +51,7 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         self.promotionPiece = promotionPiece
     }
     
-    init(kingFrom: Int, kingTo: Int, rookFrom: Int, rookTo: Int, kingValue: Int, rookValue: Int) {
+    public init(kingFrom: Int, kingTo: Int, rookFrom: Int, rookTo: Int, kingValue: Int, rookValue: Int) {
         self.fromSquare = kingFrom
         self.targetSquare = kingTo
         self.pieceValue = kingValue
@@ -61,7 +61,7 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         self.castlingRookDestination = rookTo
     }
     
-    static func == (lhs: Move, rhs: Move) -> Bool {
+    public static func == (lhs: Move, rhs: Move) -> Bool {
         return (lhs.fromSquare == rhs.fromSquare) && (lhs.targetSquare == rhs.targetSquare)
     }
     
@@ -85,10 +85,10 @@ struct Move: Equatable, Hashable, Comparable, Codable {
         return score
     }
     
-    static func < (lhs: Move, rhs: Move) -> Bool {
+    public static func < (lhs: Move, rhs: Move) -> Bool {
         return lhs.moveValue() < rhs.moveValue()
     }
-    init(notation: String) {
+    public init(notation: String) {
                 
         if notation.count == 4 {
             self.fromSquare = translateFromNotationToSquare(String(notation.prefix(2)))

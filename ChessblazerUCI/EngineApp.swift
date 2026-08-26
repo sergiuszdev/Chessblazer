@@ -1,10 +1,6 @@
-//
-//  EngineApp.swift
-//  Chessblazer
-//
-//  Created by sergiusz on 25/07/2024.
-//
-
+#if SWIFT_PACKAGE
+import Chessblazer
+#endif
 import Foundation
 
 @main

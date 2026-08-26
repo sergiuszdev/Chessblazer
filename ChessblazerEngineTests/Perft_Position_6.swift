@@ -6,6 +6,9 @@
 //
 
 import Testing
+#if SWIFT_PACKAGE
+@testable import Chessblazer
+#endif
 
 @Suite("Perft tests // Position 6")
 struct Perft_Position_6 {

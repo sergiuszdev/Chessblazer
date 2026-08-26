@@ -7,8 +7,8 @@
 
 import Foundation
 
-class Piece {
-    enum PieceType: Int {
+public class Piece {
+    public enum PieceType: Int, Sendable {
         case empty = 0
         case king = 1
         case pawn = 2
@@ -19,11 +19,11 @@ class Piece {
     }
     
     
-    enum Color: Int {
+    public enum Color: Int, Sendable {
         case white = 8
         case black = 16
         case none = 0
-        func getOppositeColor() -> Color {
+        public func getOppositeColor() -> Color {
             if self == .white {
                 return .black
             } else {
@@ -32,7 +32,7 @@ class Piece {
         }
     }
     
-    enum ColoredPieces: Int, CaseIterable {
+    public enum ColoredPieces: Int, CaseIterable, Sendable {
         
         case empty = 0
         case blackKing = 17
@@ -49,21 +49,21 @@ class Piece {
         case whiteBishop = 12
         case whiteRook = 13
         
-        static func possibleWhitePromotions() -> [ColoredPieces] {
+        public static func possibleWhitePromotions() -> [ColoredPieces] {
             return [.whiteQueen, .whiteRook, .whiteKnight, .whiteBishop]
         }
         
-        static func possibleBlackPromotions() -> [ColoredPieces] {
+        public static func possibleBlackPromotions() -> [ColoredPieces] {
             return [.blackQueen, .blackRook, .blackKnight, .blackBishop]
         }
         
     }
     
-    static func combine(type: PieceType, color: Color) -> Int {
+    public static func combine(type: PieceType, color: Color) -> Int {
         return type.rawValue | color.rawValue
     }
     
-    static func getType(piece: Int) -> PieceType {
+    public static func getType(piece: Int) -> PieceType {
         let colorValue = checkColor(piece: piece) == .white ? Color.white.rawValue : Color.black.rawValue
         let noColorPiece = piece - colorValue
         return PieceType(rawValue: noColorPiece) ?? PieceType.empty
@@ -71,7 +71,7 @@ class Piece {
     }
     
     
-    static func checkColor(piece: Int) -> Piece.Color {
+    public static func checkColor(piece: Int) -> Piece.Color {
         if piece / Piece.Color.black.rawValue == 1 {
             return .black
         } else {

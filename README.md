@@ -1,5 +1,16 @@
 
-# UCI-compatible Chess Engine fully written in Swift with dedicated GUI in SwiftUI
+# Chessblazer
+
+UCI chess engine written in Swift. Play it on [Lichess](https://lichess.org/@/TheChessblazer).
+
+The SwiftUI board lives in a separate repo: [chessblazer-app](https://github.com/sergiuszdev/chessblazer-app). It pulls this engine as a Swift package (`import Chessblazer`).
+
+Build the UCI binary with:
+
+```
+swift build -c release --product ChessblazerUCI
+```
+
 # Engine
 Check it out on [Lichess](https://lichess.org/@/TheChessblazer)
 ## Current state

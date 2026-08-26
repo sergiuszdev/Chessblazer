@@ -7,30 +7,30 @@
 
 import Foundation
 
-class Game {
+public final class Game {
     
-    var boardData = BoardData()
-    var boardState = BoardState(currentTurnColor: .white)
+    public var boardData = BoardData()
+    public var boardState = BoardState(currentTurnColor: .white)
     
-    init() {
+    public init() {
         startNewGame()
     }
     
-    func loadFromFen(fen: String) {
+    public func loadFromFen(fen: String) {
         boardState = GameEngine.loadBoardFromFen(fen: fen)
         refreshDerivedState()
     }
     
-    func startNewGame() {
+    public func startNewGame() {
         loadFromFen(fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     }
     
-    func makeMove(move: Move) {
+    public func makeMove(move: Move) {
         boardState.play(move, snapshotLegalMoves: true)
         refreshDerivedState()
     }
     
-    func undoMove() {
+    public func undoMove() {
         boardState.unplay()
         if !boardState.currentValidMoves.isEmpty {
             boardData.hasGameEnded = false
@@ -38,19 +38,19 @@ class Game {
         }
     }
     
-    func play(_ move: Move) {
+    public func play(_ move: Move) {
         boardState.play(move, snapshotLegalMoves: false)
     }
     
-    func playNull() {
+    public func playNull() {
         boardState.playNull()
     }
     
-    func unplay() {
+    public func unplay() {
         boardState.unplay()
     }
     
-    func findMove(notation: String) -> Move? {
+    public func findMove(notation: String) -> Move? {
         let parsed = Move(notation: notation)
         guard parsed.fromSquare != nil, parsed.targetSquare != nil else { return nil }
         return boardState.currentValidMoves.first { legal in
@@ -61,7 +61,7 @@ class Game {
         }
     }
     
-    func toBoardArrayRepresentation() -> [Int] {
+    public func toBoardArrayRepresentation() -> [Int] {
         var array = Array(repeating: 0, count: 64)
         boardState.bitboards.forEachOccupied { piece, board in
             var pieceBitboard = board

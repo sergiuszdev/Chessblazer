@@ -6,6 +6,9 @@
 //
 
 import Testing
+#if SWIFT_PACKAGE
+@testable import Chessblazer
+#endif
 
 @Suite("Perft tests // Kiwipete")
 struct Perft_Kiwipete {

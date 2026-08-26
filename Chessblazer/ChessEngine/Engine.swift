@@ -7,13 +7,13 @@
 
 import Foundation
 
-final class Engine: @unchecked Sendable {
-    let engineName = "Chessblazer"
-    let engineVersion = "alpha 0.002"
-    var quit = false
-    let engineAuthor = "sergiusz"
+public final class Engine: @unchecked Sendable {
+    public let engineName = "Chessblazer"
+    public let engineVersion = "alpha 0.002"
+    public var quit = false
+    public let engineAuthor = "sergiusz"
     
-    var game = Game()
+    public var game = Game()
     private var uciOptions = EngineUciOptions()
     private let transpositionTable = TranspositionTable(megabytes: 16)
     
@@ -23,7 +23,9 @@ final class Engine: @unchecked Sendable {
     private let searchGroup = DispatchGroup()
     private static let searchStackSize = 8 * 1024 * 1024
     
-    func processInput(command input: String) {
+    public init() {}
+    
+    public func processInput(command input: String) {
         let args = input.split(whereSeparator: { $0.isWhitespace }).map(String.init)
         guard let token = args.first, let command = CommandsGUItoEngine(rawValue: token) else { return }
 
