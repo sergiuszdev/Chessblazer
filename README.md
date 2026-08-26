@@ -3,7 +3,7 @@
 
 UCI chess engine written in Swift. Play it on [Lichess](https://lichess.org/@/TheChessblazer).
 
-The SwiftUI board lives in a separate repo: [chessblazer-app](https://github.com/sergiuszdev/chessblazer-app). It pulls this engine as a Swift package (`import Chessblazer`).
+
 
 Build the UCI binary with:
 
@@ -275,22 +275,6 @@ To execute the performance tests, run the 'Performance Tests' suite
 
 
 # GUI
-## UI
-### Implemented
-- basic game (based on engine)
-- starting new game
-- player vs engine [check engine in left corner]
-- engine vs engine
-- loading game from fen notation
-- undoing moves
-### Not yet implemented
-- choosing piece for pawn's promotion
-- switching pov
-- choosing player's color
-- making custom positions
-- and many more (right now I don't plan anything for GUI as I focus on engine)
 
-
-## Old state showcase (me vs engine)
-<img src = "https://raw.githubusercontent.com/SzymonSergiusz/Chessblazer/main/res/showcase2.gif" alt="showcase">
+App is in a separate repo: [chessblazer-app](https://github.com/sergiuszdev/chessblazer-app).
 
