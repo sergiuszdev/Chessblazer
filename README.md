@@ -1,10 +1,11 @@
+
 # UCI-compatible Chess Engine fully written in Swift with dedicated GUI in SwiftUI
 # Engine
 Check it out on [Lichess](https://lichess.org/@/TheChessblazer)
 ## Current state
+<img width="720" height="840" alt="lichess-game-BoJ1PFjF-white" src="https://github.com/user-attachments/assets/a8a1bc98-23af-44ca-a4ec-19aa0f65e023" />
 
-## Old state showcase (me vs engine)
-<img src = "https://raw.githubusercontent.com/SzymonSergiusz/Chessblazer/main/res/showcase2.gif" alt="showcase">
+
 <i>it's little smarter now, it even once beat stockfish level 1</i>
 
 ## Game logic
@@ -208,4 +209,9 @@ To execute the performance tests, run the 'Performance Tests' suite
 - switching pov
 - choosing player's color
 - making custom positions
-- and many more (right now I don't plan anything for GUI as I focus on engine) 
+- and many more (right now I don't plan anything for GUI as I focus on engine)
+
+
+## Old state showcase (me vs engine)
+<img src = "https://raw.githubusercontent.com/SzymonSergiusz/Chessblazer/main/res/showcase2.gif" alt="showcase">
+
