@@ -363,6 +363,10 @@ func alphabeta(
         return evaluate(bitboards: game.boardState.bitboards)
     }
     
+    if ply >= maxSearchPly {
+        return evaluate(bitboards: game.boardState.bitboards)
+    }
+    
     if depth <= 0 {
         return quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: maximizingPlayer, ply: ply, qsPly: 0, context: context)
     }
@@ -574,6 +578,10 @@ func quiesce(game: Game, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int
     var beta = beta
     
     if context.shouldStop() {
+        return evaluate(bitboards: game.boardState.bitboards)
+    }
+    
+    if ply >= maxSearchPly {
         return evaluate(bitboards: game.boardState.bitboards)
     }
     

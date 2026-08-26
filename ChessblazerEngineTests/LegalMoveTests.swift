@@ -69,6 +69,19 @@ struct LegalMoveTests {
         #expect(game.boardState.currentValidMoves.count == 48)
     }
     
+    @Test func blackKingOnH8DoesNotTrap() {
+        let h8Attacks = generateBlackPawnAttacks(square: 63)
+        #expect(h8Attacks == generateBlackPawnAttacks(blackPawns: Bitboard.bit(at: 63)))
+        
+        let game = Game()
+        game.loadFromFen(fen: "7k/8/8/8/8/8/8/7K b - - 0 1")
+        #expect(!game.boardState.currentValidMoves.isEmpty)
+        let move = findBestMove(game: game, depth: 4, maximizingPlayer: false)
+        #expect(move != nil)
+        #expect(game.boardState.currentValidMoves.contains(move!))
+        #expect(game.boardState.undoStack.isEmpty)
+    }
+    
     @Test func betweenSquaresOnAFile() {
         let e1 = 4
         let e8 = 60

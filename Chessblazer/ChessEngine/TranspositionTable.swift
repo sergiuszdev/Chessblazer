@@ -85,12 +85,16 @@ final class TranspositionTable {
     }
     
     static func scoreToTT(_ score: Int, ply: Int) -> Int {
+        let ply = max(ply, 0)
+        if score > Int.max - ply || score < Int.min + ply { return score }
         if score >= mateScoreThreshold { return score + ply }
         if score <= -mateScoreThreshold { return score - ply }
         return score
     }
     
     static func scoreFromTT(_ score: Int, ply: Int) -> Int {
+        let ply = max(ply, 0)
+        if score > Int.max - ply || score < Int.min + ply { return score }
         if score >= mateScoreThreshold { return score - ply }
         if score <= -mateScoreThreshold { return score + ply }
         return score

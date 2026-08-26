@@ -20,8 +20,8 @@ final class Engine: @unchecked Sendable {
     private let outputLock = NSLock()
     private let flagLock = NSLock()
     private var stopSearch = false
-    private let searchQueue = DispatchQueue(label: "chessblazer.search", qos: .userInitiated)
     private let searchGroup = DispatchGroup()
+    private static let searchStackSize = 8 * 1024 * 1024
     
     func processInput(command input: String) {
         let args = input.split(whereSeparator: { $0.isWhitespace }).map(String.init)
@@ -97,7 +97,7 @@ final class Engine: @unchecked Sendable {
         let maximizingPlayer = game.boardState.currentTurnColor == .white
         let rootMoves = game.boardState.currentValidMoves
         searchGroup.enter()
-        searchQueue.async {
+        let thread = Thread { [self] in
             defer { self.searchGroup.leave() }
             self.transpositionTable.resize(megabytes: self.uciOptions.hashSizeMB)
             let move = findBestMove(
@@ -120,6 +120,10 @@ final class Engine: @unchecked Sendable {
                 self.sendOutput(output: "bestmove 0000")
             }
         }
+        thread.stackSize = Self.searchStackSize
+        thread.name = "chessblazer.search"
+        thread.qualityOfService = .userInitiated
+        thread.start()
     }
     
     private func requestStop() {
