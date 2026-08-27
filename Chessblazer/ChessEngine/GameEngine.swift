@@ -36,6 +36,9 @@ class GameEngine {
         if args.count > 3 {
             boardState.enPassant = args[3]
         }
+        if args.count > 4 {
+            boardState.halfmoveClock = Int(args[4]) ?? 0
+        }
         let ranks: [String] = (args.first ?? "").components(separatedBy: "/")
         var index = 0
         for rank in ranks.reversed() {

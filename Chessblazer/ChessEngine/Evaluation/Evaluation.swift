@@ -14,6 +14,35 @@ private let nullMoveMinDepth = 3
 private let nullMoveReduction = 2
 private let lmrMinDepth = 3
 private let lmrMinMoveIndex = 3
+private let rfpMaxDepth = 4
+private let rfpMarginPerDepth = 200
+private let razorMaxDepth = 2
+private let razorMargin = 600
+private let futilityMaxDepth = 2
+private let futilityMarginPerDepth = 200
+private let aspirationMinDepth = 4
+private let aspirationWindow = 25
+private let aspirationMaxFails = 5
+private let searchInfinity = MATE_VALUE * 2
+
+private func addScore(_ score: Int, _ delta: Int) -> Int {
+    if delta <= 0 { return score }
+    if score > searchInfinity - delta { return searchInfinity }
+    return min(searchInfinity, score + delta)
+}
+
+private func subtractScore(_ score: Int, _ delta: Int) -> Int {
+    if delta <= 0 { return score }
+    if score < -searchInfinity + delta { return -searchInfinity }
+    return max(-searchInfinity, score - delta)
+}
+
+private func pvsProbeWindow(alpha: Int, beta: Int, maximizingPlayer: Bool) -> (Int, Int) {
+    if maximizingPlayer {
+        return (alpha, addScore(alpha, 1))
+    }
+    return (subtractScore(beta, 1), beta)
+}
 
 let PieceValueTable: [Int: Int] = [
     Piece.ColoredPieces.empty.rawValue : 0,
@@ -333,6 +362,13 @@ func isTactical(_ move: Move) -> Bool {
     return move.captureValue != 0 || move.promotionPiece != 0 || move.enPasssantCapture != 0
 }
 
+func resetsFiftyMove(_ move: Move) -> Bool {
+    if move.castling { return false }
+    return Piece.getType(piece: move.pieceValue) == .pawn
+        || move.captureValue != 0
+        || move.enPasssantCapture != 0
+}
+
 func hasNonPawnMaterial(bitboards: PieceBitboards, color: Piece.Color) -> Bool {
     if color == .white {
         return bitboards[Piece.ColoredPieces.whiteKnight.rawValue] != 0
@@ -403,42 +439,63 @@ func alphabeta(
     }
     
     let inCheck = checkIfCheck(boardState: game.boardState)
+    let mateBound = TranspositionTable.mateScoreThreshold
+    let lookingForMate = maximizingPlayer ? beta >= mateBound : alpha <= -mateBound
+    let staticEval = evaluate(bitboards: game.boardState.bitboards)
+    
+    if !inCheck && !lookingForMate && depth <= rfpMaxDepth {
+        let margin = rfpMarginPerDepth * depth
+        if maximizingPlayer, staticEval - margin >= beta {
+            return staticEval
+        }
+        if !maximizingPlayer, staticEval + margin <= alpha {
+            return staticEval
+        }
+    }
+    
+    if !inCheck && !lookingForMate && depth <= razorMaxDepth {
+        if maximizingPlayer, staticEval + razorMargin <= alpha {
+            let qs = quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: true, ply: ply, qsPly: 0, context: context)
+            if qs <= alpha { return qs }
+        }
+        if !maximizingPlayer, staticEval - razorMargin >= beta {
+            let qs = quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: false, ply: ply, qsPly: 0, context: context)
+            if qs >= beta { return qs }
+        }
+    }
     
     if canNull
         && !inCheck
+        && !lookingForMate
         && depth >= nullMoveMinDepth
         && hasNonPawnMaterial(bitboards: game.boardState.bitboards, color: game.boardState.currentTurnColor)
     {
-        let mateBound = TranspositionTable.mateScoreThreshold
-        let lookingForMate = maximizingPlayer ? beta >= mateBound : alpha <= -mateBound
-        if !lookingForMate {
-            game.playNull()
-            let nmpDepth = depth - 1 - nullMoveReduction
-            let score = alphabeta(
-                game: game,
-                depth: nmpDepth,
-                alpha: alpha,
-                beta: beta,
-                maximizingPlayer: !maximizingPlayer,
-                ply: ply + 1,
-                context: context,
-                canNull: false
+        game.playNull()
+        let nmpDepth = depth - 1 - nullMoveReduction
+        let score = alphabeta(
+            game: game,
+            depth: nmpDepth,
+            alpha: maximizingPlayer ? subtractScore(beta, 1) : alpha,
+            beta: maximizingPlayer ? beta : addScore(alpha, 1),
+            maximizingPlayer: !maximizingPlayer,
+            ply: ply + 1,
+            context: context,
+            canNull: false
+        )
+        game.unplay()
+        if context.shouldStop() {
+            return score
+        }
+        let cutoff = maximizingPlayer ? score >= beta : score <= alpha
+        if cutoff {
+            context.tt.store(
+                key: key,
+                depth: max(1, nmpDepth),
+                score: TranspositionTable.scoreToTT(score, ply: ply),
+                bound: maximizingPlayer ? .lower : .upper,
+                move: nil
             )
-            game.unplay()
-            if context.shouldStop() {
-                return score
-            }
-            let cutoff = maximizingPlayer ? score >= beta : score <= alpha
-            if cutoff {
-                context.tt.store(
-                    key: key,
-                    depth: max(1, nmpDepth),
-                    score: TranspositionTable.scoreToTT(score, ply: ply),
-                    bound: maximizingPlayer ? .lower : .upper,
-                    move: nil
-                )
-                return score
-            }
+            return score
         }
     }
     
@@ -447,7 +504,8 @@ func alphabeta(
         &moves,
         ttMove: ttMove,
         killers: context.killers(at: ply),
-        history: context.history
+        history: context.history,
+        boardState: game.boardState
     )
     if let score = terminalScore(game: game, ply: ply, legalMoves: moves) {
         context.tt.store(
@@ -459,55 +517,59 @@ func alphabeta(
         )
         return score
     }
+    if game.boardState.isFiftyMoveDraw(hasLegalMoves: true) {
+        return 0
+    }
     
     var bestEval = maximizingPlayer ? Int.min : Int.max
     var bestMove: Move? = nil
     var interrupted = false
     var quietsTried = [Move]()
     
-    func searchMove(_ move: Move, index: Int) -> Int {
+    func searchMove(_ move: Move, index: Int, isFirst: Bool) -> Int {
         game.play(move)
         defer { game.unplay() }
         let fullDepth = depth - 1
-        let reduce = !inCheck
-            && depth >= lmrMinDepth
-            && index >= lmrMinMoveIndex
-            && !isTactical(move)
-        if reduce {
-            let reduction = 1 + index / 8
-            let reducedDepth = max(1, fullDepth - reduction)
-            var eval = alphabeta(
+        if isFirst {
+            return alphabeta(
                 game: game,
-                depth: reducedDepth,
+                depth: fullDepth,
                 alpha: alpha,
                 beta: beta,
                 maximizingPlayer: !maximizingPlayer,
                 ply: ply + 1,
                 context: context
             )
-            let needsResearch = maximizingPlayer ? eval > alpha : eval < beta
-            if needsResearch && !context.shouldStop() {
-                eval = alphabeta(
-                    game: game,
-                    depth: fullDepth,
-                    alpha: alpha,
-                    beta: beta,
-                    maximizingPlayer: !maximizingPlayer,
-                    ply: ply + 1,
-                    context: context
-                )
-            }
-            return eval
         }
-        return alphabeta(
+        let reduce = !inCheck
+            && depth >= lmrMinDepth
+            && index >= lmrMinMoveIndex
+            && !isTactical(move)
+        let reduction = reduce ? 1 + index / 8 : 0
+        let probeDepth = reduce ? max(1, fullDepth - reduction) : fullDepth
+        let probe = pvsProbeWindow(alpha: alpha, beta: beta, maximizingPlayer: maximizingPlayer)
+        var eval = alphabeta(
             game: game,
-            depth: fullDepth,
-            alpha: alpha,
-            beta: beta,
+            depth: probeDepth,
+            alpha: probe.0,
+            beta: probe.1,
             maximizingPlayer: !maximizingPlayer,
             ply: ply + 1,
             context: context
         )
+        let needsResearch = maximizingPlayer ? eval > alpha : eval < beta
+        if needsResearch && !context.shouldStop() {
+            eval = alphabeta(
+                game: game,
+                depth: fullDepth,
+                alpha: alpha,
+                beta: beta,
+                maximizingPlayer: !maximizingPlayer,
+                ply: ply + 1,
+                context: context
+            )
+        }
+        return eval
     }
     
     func recordQuietCutoff(_ move: Move) {
@@ -523,7 +585,13 @@ func alphabeta(
             interrupted = true
             break
         }
-        let eval = searchMove(move, index: index)
+        let isFirst = index == 0
+        if !inCheck && !lookingForMate && depth <= futilityMaxDepth && !isTactical(move) && !isFirst {
+            let margin = futilityMarginPerDepth * depth
+            if maximizingPlayer, staticEval + margin <= alpha { continue }
+            if !maximizingPlayer, staticEval - margin >= beta { continue }
+        }
+        let eval = searchMove(move, index: index, isFirst: isFirst)
         
         if maximizingPlayer {
             if eval > bestEval {
@@ -593,6 +661,9 @@ func quiesce(game: Game, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int
     if let score = terminalScore(game: game, ply: ply, legalMoves: legalMoves) {
         return score
     }
+    if game.boardState.isFiftyMoveDraw(hasLegalMoves: true) {
+        return 0
+    }
     
     let inCheck = checkIfCheck(boardState: game.boardState)
     let standPat = evaluate(bitboards: game.boardState.bitboards)
@@ -614,7 +685,15 @@ func quiesce(game: Game, alpha: Int, beta: Int, maximizingPlayer: Bool, ply: Int
     
     let moves = inCheck
         ? legalMoves.sorted(by: >)
-        : legalMoves.filter(isTactical).sorted(by: >)
+        : legalMoves.filter { move in
+            guard isTactical(move) else { return false }
+            return seeScore(
+                move: move,
+                bitboards: game.boardState.bitboards,
+                occupancy: game.boardState.occupancy,
+                sideToMove: game.boardState.currentTurnColor
+            ) >= 0
+        }.sorted(by: >)
     
     if moves.isEmpty {
         return standPat
@@ -690,14 +769,59 @@ func iterativeDeepening(
 ) -> Move? {
     let context = SearchContext(limits: limits, isCancelled: isCancelled, onInfo: onInfo, tt: tt)
     var bestMove: Move? = nil
+    var lastScore = 0
     
     for depth in 1...limits.maxDepth {
         if context.shouldStop() {
             break
         }
-        let (move, eval) = performSearch(game: game, depth: depth, maximizingPlayer: maximizingPlayer, context: context)
-        if let move {
+        var delta = aspirationWindow
+        var alpha = -searchInfinity
+        var beta = searchInfinity
+        if depth >= aspirationMinDepth {
+            alpha = subtractScore(lastScore, delta)
+            beta = addScore(lastScore, delta)
+        }
+        
+        var move: Move?
+        var eval = 0
+        var fails = 0
+        while true {
+            (move, eval) = performSearch(
+                game: game,
+                depth: depth,
+                maximizingPlayer: maximizingPlayer,
+                context: context,
+                alpha: alpha,
+                beta: beta
+            )
+            if context.timedOut || context.shouldStop() {
+                break
+            }
+            if eval > alpha && eval < beta {
+                break
+            }
+            fails += 1
+            if fails >= aspirationMaxFails {
+                if alpha <= -searchInfinity && beta >= searchInfinity {
+                    break
+                }
+                alpha = -searchInfinity
+                beta = searchInfinity
+                continue
+            }
+            if eval <= alpha {
+                alpha = subtractScore(eval, delta)
+                delta = min(delta * 2, searchInfinity)
+            } else {
+                beta = addScore(eval, delta)
+                delta = min(delta * 2, searchInfinity)
+            }
+        }
+        
+        if let move, !context.timedOut {
             bestMove = move
+            lastScore = eval
             let engineScore = maximizingPlayer ? eval : -eval
             onInfo?("info depth \(depth) score cp \(engineScore)")
         }
@@ -709,52 +833,88 @@ func iterativeDeepening(
     return bestMove
 }
 
-func performSearch(game: Game, depth: Int, maximizingPlayer: Bool, context: SearchContext) -> (Move?, Int) {
+func performSearch(game: Game, depth: Int, maximizingPlayer: Bool, context: SearchContext, alpha: Int, beta: Int) -> (Move?, Int) {
     var legalMoves = game.boardState.currentValidMoves
     let ttMove = context.tt.probe(game.boardState.zobristKey)?.move
     orderMoves(
         &legalMoves,
         ttMove: ttMove,
         killers: context.killers(at: 0),
-        history: context.history
+        history: context.history,
+        boardState: game.boardState
     )
     
     if legalMoves.isEmpty {
         return (nil, terminalScore(game: game, ply: 0) ?? 0)
     }
+    if game.boardState.isFiftyMoveDraw(hasLegalMoves: true) {
+        return (legalMoves.first, 0)
+    }
     
-    var bestMove: Move? = nil
-    var alpha = -MATE_VALUE * 2
-    var beta = MATE_VALUE * 2
+    var bestMove: Move? = legalMoves.first
+    var alpha = alpha
+    var beta = beta
     var bestEval = maximizingPlayer ? Int.min : Int.max
+    var searchedAny = false
     
     if maximizingPlayer {
-        for move in legalMoves {
+        for (index, move) in legalMoves.enumerated() {
             if context.shouldStop() { break }
             game.play(move)
-            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false, ply: 1, context: context)
+            let eval: Int
+            if index == 0 {
+                eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false, ply: 1, context: context)
+            } else {
+                let window = pvsProbeWindow(alpha: alpha, beta: beta, maximizingPlayer: true)
+                var probe = alphabeta(game: game, depth: depth - 1, alpha: window.0, beta: window.1, maximizingPlayer: false, ply: 1, context: context)
+                if probe > alpha && probe < beta && !context.shouldStop() {
+                    probe = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: false, ply: 1, context: context)
+                }
+                eval = probe
+            }
             game.unplay()
+            searchedAny = true
             
             if eval > bestEval {
                 bestEval = eval
                 bestMove = move
                 alpha = max(alpha, bestEval)
             }
+            if bestEval >= beta {
+                break
+            }
         }
     } else {
-        for move in legalMoves {
+        for (index, move) in legalMoves.enumerated() {
             if context.shouldStop() { break }
             game.play(move)
-            let eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true, ply: 1, context: context)
+            let eval: Int
+            if index == 0 {
+                eval = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true, ply: 1, context: context)
+            } else {
+                let window = pvsProbeWindow(alpha: alpha, beta: beta, maximizingPlayer: false)
+                var probe = alphabeta(game: game, depth: depth - 1, alpha: window.0, beta: window.1, maximizingPlayer: true, ply: 1, context: context)
+                if probe < beta && probe > alpha && !context.shouldStop() {
+                    probe = alphabeta(game: game, depth: depth - 1, alpha: alpha, beta: beta, maximizingPlayer: true, ply: 1, context: context)
+                }
+                eval = probe
+            }
             game.unplay()
+            searchedAny = true
             
             if eval < bestEval {
                 bestEval = eval
                 bestMove = move
                 beta = min(beta, bestEval)
             }
+            if bestEval <= alpha {
+                break
+            }
         }
     }
     
+    if !searchedAny {
+        return (bestMove, 0)
+    }
     return (bestMove, bestEval)
 }
