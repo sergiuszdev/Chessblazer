@@ -68,19 +68,31 @@ struct UciGoInput {
 struct SearchLimits {
     let maxDepth: Int
     let allocatedTime: TimeInterval?
+    let hardTime: TimeInterval?
     
     static let defaultMoveTime: TimeInterval = 1.0
     static let maxSearchDepth = 64
+    
+    init(maxDepth: Int, allocatedTime: TimeInterval?, hardTime: TimeInterval? = nil) {
+        self.maxDepth = maxDepth
+        self.allocatedTime = allocatedTime
+        if let allocatedTime, hardTime == nil {
+            self.hardTime = allocatedTime
+        } else {
+            self.hardTime = hardTime
+        }
+    }
     
     static func from(go: UciGoInput, sideToMove: Piece.Color, moveOverheadMs: Int = 10) -> SearchLimits {
         let maxDepth = min(max(go.depth ?? maxSearchDepth, 1), maxSearchDepth)
         
         if go.infinite || go.ponder {
-            return SearchLimits(maxDepth: go.depth ?? maxSearchDepth, allocatedTime: nil)
+            return SearchLimits(maxDepth: go.depth ?? maxSearchDepth, allocatedTime: nil, hardTime: nil)
         }
         
         if let moveTime = go.searchMoveTime, moveTime > 0 {
-            return SearchLimits(maxDepth: go.depth ?? maxSearchDepth, allocatedTime: TimeInterval(moveTime) / 1000.0)
+            let seconds = TimeInterval(moveTime) / 1000.0
+            return SearchLimits(maxDepth: go.depth ?? maxSearchDepth, allocatedTime: seconds, hardTime: seconds)
         }
         
         let remaining: Int?
@@ -96,19 +108,24 @@ struct SearchLimits {
         if let remaining, remaining > 0 {
             let movesToGo = max(go.movesToGo ?? 30, 1)
             let usable = max(remaining - moveOverheadMs, 1)
-            var allocatedMs = usable / movesToGo + increment / 2
-            allocatedMs = min(allocatedMs, usable / 2)
-            allocatedMs = min(allocatedMs, max(usable - 20, 1))
-            allocatedMs = max(allocatedMs, 50)
-            allocatedMs = min(allocatedMs, usable)
-            return SearchLimits(maxDepth: go.depth ?? maxSearchDepth, allocatedTime: TimeInterval(allocatedMs) / 1000.0)
+            var softMs = usable / movesToGo + increment / 2
+            softMs = min(softMs, usable / 2)
+            softMs = min(softMs, max(usable - 20, 1))
+            softMs = max(softMs, 50)
+            softMs = min(softMs, usable)
+            let hardMs = min(max(softMs * 3, softMs), (usable * 4) / 5)
+            return SearchLimits(
+                maxDepth: go.depth ?? maxSearchDepth,
+                allocatedTime: TimeInterval(softMs) / 1000.0,
+                hardTime: TimeInterval(hardMs) / 1000.0
+            )
         }
         
         if go.depth != nil {
-            return SearchLimits(maxDepth: maxDepth, allocatedTime: nil)
+            return SearchLimits(maxDepth: maxDepth, allocatedTime: nil, hardTime: nil)
         }
         
-        return SearchLimits(maxDepth: maxSearchDepth, allocatedTime: defaultMoveTime)
+        return SearchLimits(maxDepth: maxSearchDepth, allocatedTime: defaultMoveTime, hardTime: defaultMoveTime)
     }
 }
 

@@ -20,14 +20,34 @@ struct TranspositionTableTests {
         #expect(tt.probe(0xDCBA) == nil)
     }
     
-    @Test func alwaysReplaceOnCollision() {
+    @Test func prefersDeeperEntryOnCollision() {
         let tt = TranspositionTable(entryCount: 2)
-        tt.store(key: 2, depth: 3, score: 10, bound: .exact, move: nil)
-        tt.store(key: 4, depth: 8, score: 99, bound: .lower, move: nil)
+        tt.store(key: 2, depth: 8, score: 10, bound: .exact, move: nil)
+        tt.store(key: 4, depth: 3, score: 99, bound: .lower, move: nil)
+        
+        #expect(tt.probe(2)?.depth == 8)
+        #expect(tt.probe(2)?.score == 10)
+        #expect(tt.probe(4) == nil)
+    }
+    
+    @Test func agedEntryIsReplacedByShallowerCollision() {
+        let tt = TranspositionTable(entryCount: 2)
+        tt.store(key: 2, depth: 8, score: 10, bound: .exact, move: nil)
+        tt.newSearch()
+        tt.store(key: 4, depth: 3, score: 99, bound: .lower, move: nil)
         
         #expect(tt.probe(2) == nil)
         #expect(tt.probe(4)?.score == 99)
-        #expect(tt.probe(4)?.bound == .lower)
+        #expect(tt.probe(4)?.depth == 3)
+    }
+    
+    @Test func sameKeyAlwaysUpdates() {
+        let tt = TranspositionTable(entryCount: 8)
+        tt.store(key: 7, depth: 8, score: 10, bound: .exact, move: nil)
+        tt.store(key: 7, depth: 2, score: 42, bound: .upper, move: nil)
+        #expect(tt.probe(7)?.score == 42)
+        #expect(tt.probe(7)?.depth == 2)
+        #expect(tt.probe(7)?.bound == .upper)
     }
     
     @Test func clearRemovesEntries() {

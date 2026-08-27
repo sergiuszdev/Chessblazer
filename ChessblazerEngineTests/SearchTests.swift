@@ -154,4 +154,40 @@ struct SearchTests {
         #expect(limits.allocatedTime != nil)
         #expect(limits.allocatedTime! < 30.0)
     }
+    
+    @Test func clockSearchSetsHardAboveSoft() {
+        let go = UciGoInput.parse(from: "go wtime 60000 btime 60000")
+        let limits = SearchLimits.from(go: go, sideToMove: .white, moveOverheadMs: 10)
+        #expect(limits.allocatedTime != nil)
+        #expect(limits.hardTime != nil)
+        #expect(limits.hardTime! >= limits.allocatedTime!)
+        #expect(limits.hardTime! <= 48.0)
+    }
+    
+    @Test func moveTimeUsesEqualSoftAndHard() {
+        let go = UciGoInput.parse(from: "go movetime 1500")
+        let limits = SearchLimits.from(go: go, sideToMove: .white)
+        #expect(limits.allocatedTime == 1.5)
+        #expect(limits.hardTime == 1.5)
+    }
+    
+    @Test func failLowExtendsSoftTowardHard() {
+        let limits = SearchLimits(maxDepth: 4, allocatedTime: 1.0, hardTime: 3.0)
+        let context = SearchContext(limits: limits, tt: TranspositionTable(entryCount: 8))
+        #expect(context.softLimit == 1.0)
+        context.extendSoftForFailLow()
+        #expect(context.softLimit! > 1.0)
+        #expect(context.softLimit! <= 3.0)
+        context.extendSoftForFailLow()
+        context.extendSoftForFailLow()
+        context.extendSoftForFailLow()
+        #expect(context.softLimit == 3.0)
+    }
+    
+    @Test func easyMoveNeedsStableDepthsAndSoftBudget() {
+        let limits = SearchLimits(maxDepth: 8, allocatedTime: 10.0, hardTime: 20.0)
+        let context = SearchContext(limits: limits, tt: TranspositionTable(entryCount: 8))
+        #expect(!context.shouldStopForEasyMove(stableDepths: 2))
+        #expect(!context.shouldStopForEasyMove(stableDepths: 3))
+    }
 }

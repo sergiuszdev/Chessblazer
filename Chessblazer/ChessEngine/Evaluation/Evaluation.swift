@@ -63,7 +63,8 @@ let PieceValueTable: [Int: Int] = [
 
 final class SearchContext {
     let startTime: TimeInterval
-    let timeLimit: TimeInterval?
+    private(set) var softLimit: TimeInterval?
+    let hardLimit: TimeInterval?
     let isCancelled: () -> Bool
     let onInfo: ((String) -> Void)?
     let tt: TranspositionTable
@@ -78,7 +79,8 @@ final class SearchContext {
         tt: TranspositionTable
     ) {
         startTime = Date().timeIntervalSince1970
-        timeLimit = limits.allocatedTime
+        softLimit = limits.allocatedTime
+        hardLimit = limits.hardTime ?? limits.allocatedTime
         self.isCancelled = isCancelled
         self.onInfo = onInfo
         self.tt = tt
@@ -89,17 +91,39 @@ final class SearchContext {
         )
     }
     
+    var elapsed: TimeInterval {
+        Date().timeIntervalSince1970 - startTime
+    }
+    
     func shouldStop() -> Bool {
         if isCancelled() {
             timedOut = true
             return true
         }
-        guard let timeLimit else { return false }
-        if Date().timeIntervalSince1970 - startTime >= timeLimit {
+        guard let hardLimit else { return false }
+        if elapsed >= hardLimit {
             timedOut = true
             return true
         }
         return false
+    }
+    
+    /// Soft budget used up: do not start another iterative-deepening depth.
+    func softTimeExceeded() -> Bool {
+        guard let softLimit else { return false }
+        return elapsed >= softLimit
+    }
+    
+    /// After a root fail-low, stretch the soft budget toward the hard cap.
+    func extendSoftForFailLow() {
+        guard let soft = softLimit, let hard = hardLimit else { return }
+        softLimit = min(hard, soft + max(soft * 0.5, 0.05))
+    }
+    
+    /// Stable PV and most of the soft budget used: stop early.
+    func shouldStopForEasyMove(stableDepths: Int) -> Bool {
+        guard stableDepths >= 3, let soft = softLimit else { return false }
+        return elapsed >= soft * 0.45
     }
     
     func killers(at ply: Int) -> (Move?, Move?) {
@@ -767,14 +791,23 @@ func iterativeDeepening(
     onInfo: ((String) -> Void)?,
     tt: TranspositionTable
 ) -> Move? {
+    tt.newSearch()
     let context = SearchContext(limits: limits, isCancelled: isCancelled, onInfo: onInfo, tt: tt)
     var bestMove: Move? = nil
     var lastScore = 0
+    var stableMoveCount = 0
     
     for depth in 1...limits.maxDepth {
         if context.shouldStop() {
             break
         }
+        if depth > 1, context.softTimeExceeded() {
+            break
+        }
+        if depth > 1, context.shouldStopForEasyMove(stableDepths: stableMoveCount) {
+            break
+        }
+        
         var delta = aspirationWindow
         var alpha = -searchInfinity
         var beta = searchInfinity
@@ -802,6 +835,9 @@ func iterativeDeepening(
                 break
             }
             fails += 1
+            if eval <= alpha {
+                context.extendSoftForFailLow()
+            }
             if fails >= aspirationMaxFails {
                 if alpha <= -searchInfinity && beta >= searchInfinity {
                     break
@@ -820,6 +856,14 @@ func iterativeDeepening(
         }
         
         if let move, !context.timedOut {
+            if let previous = bestMove,
+               previous.fromSquare == move.fromSquare,
+               previous.targetSquare == move.targetSquare,
+               previous.promotionPiece == move.promotionPiece {
+                stableMoveCount += 1
+            } else {
+                stableMoveCount = 1
+            }
             bestMove = move
             lastScore = eval
             let engineScore = maximizingPlayer ? eval : -eval

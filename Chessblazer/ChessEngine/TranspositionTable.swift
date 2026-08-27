@@ -28,6 +28,7 @@ final class TranspositionTable {
     
     private var entries: [TTEntry]
     private var mask: UInt64
+    private var generation: UInt8 = 1
     
     init(megabytes: Int) {
         entries = []
@@ -50,10 +51,18 @@ final class TranspositionTable {
         if count == entries.count { return }
         entries = Array(repeating: TTEntry(), count: count)
         mask = UInt64(count - 1)
+        generation = 1
     }
     
     func clear() {
         entries = Array(repeating: TTEntry(), count: entries.count)
+        generation = 1
+    }
+    
+    /// Bump age so stale entries from earlier searches are preferred for replacement.
+    func newSearch() {
+        generation &+= 1
+        if generation == 0 { generation = 1 }
     }
     
     func probe(_ key: UInt64) -> TTHit? {
@@ -72,16 +81,29 @@ final class TranspositionTable {
         guard bound != .empty else { return }
         guard score != Int.min, score != Int.max else { return }
         let index = Int(key & mask)
+        let current = entries[index]
+        if !shouldReplace(current, key: key, depth: depth) {
+            return
+        }
+        let keepMove = current.key == key && move == nil ? current.move : move
         entries[index] = TTEntry(
             key: key,
             score: Int32(clamping: score),
             depth: Int8(clamping: depth),
             bound: bound,
-            from: UInt8(clamping: move?.fromSquare ?? 0),
-            to: UInt8(clamping: move?.targetSquare ?? 0),
-            promotionPiece: UInt8(clamping: move?.promotionPiece ?? 0),
-            hasMove: move?.fromSquare != nil && move?.targetSquare != nil
+            age: generation,
+            from: UInt8(clamping: keepMove?.fromSquare ?? 0),
+            to: UInt8(clamping: keepMove?.targetSquare ?? 0),
+            promotionPiece: UInt8(clamping: keepMove?.promotionPiece ?? 0),
+            hasMove: keepMove?.fromSquare != nil && keepMove?.targetSquare != nil
         )
+    }
+    
+    private func shouldReplace(_ entry: TTEntry, key: UInt64, depth: Int) -> Bool {
+        if entry.bound == .empty { return true }
+        if entry.key == key { return true }
+        if entry.age != generation { return true }
+        return depth >= Int(entry.depth)
     }
     
     static func scoreToTT(_ score: Int, ply: Int) -> Int {
@@ -111,6 +133,7 @@ private struct TTEntry {
     var score: Int32 = 0
     var depth: Int8 = 0
     var bound: TTBound = .empty
+    var age: UInt8 = 0
     var from: UInt8 = 0
     var to: UInt8 = 0
     var promotionPiece: UInt8 = 0
