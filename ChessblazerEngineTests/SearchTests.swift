@@ -86,6 +86,8 @@ struct SearchTests {
         #expect(advertised.contains("Move Overhead"))
         #expect(advertised.contains("Hash"))
         #expect(advertised.contains("Threads"))
+        #expect(advertised.contains("OwnBook"))
+        #expect(advertised.contains("Book File"))
         
         options.set(name: "Hash", value: "64")
         #expect(options.hashSizeMB == 64)

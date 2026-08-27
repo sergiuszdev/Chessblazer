@@ -140,6 +140,9 @@ struct EngineUciOptions {
         UciOption(name: "Move Overhead", type: "spin", defaultValue: "10", min: 0, max: 5000),
         UciOption(name: "UCI_Chess960", type: "check", defaultValue: "false"),
         UciOption(name: "UCI_ShowWDL", type: "check", defaultValue: "false"),
+        UciOption(name: "OwnBook", type: "check", defaultValue: "true"),
+        UciOption(name: "Book File", type: "string", defaultValue: ""),
+        UciOption(name: "Book Variety", type: "check", defaultValue: "true"),
         UciOption(name: "SyzygyPath", type: "string", defaultValue: "")
     ]
     
@@ -159,6 +162,25 @@ struct EngineUciOptions {
     
     var hashSizeMB: Int {
         min(max(Int(values["hash"] ?? "") ?? 16, 1), 4096)
+    }
+    
+    var ownBook: Bool {
+        check("ownbook", default: true)
+    }
+    
+    var bookFile: String {
+        values["book file"] ?? ""
+    }
+    
+    var bookVariety: Bool {
+        check("book variety", default: true)
+    }
+    
+    private func check(_ key: String, default fallback: Bool) -> Bool {
+        guard let raw = values[key]?.lowercased() else { return fallback }
+        if raw == "false" || raw == "0" { return false }
+        if raw == "true" || raw == "1" { return true }
+        return fallback
     }
 }
 

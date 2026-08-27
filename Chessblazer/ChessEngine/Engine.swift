@@ -16,6 +16,7 @@ public final class Engine: @unchecked Sendable {
     public var game = Game()
     private var uciOptions = EngineUciOptions()
     private let transpositionTable = TranspositionTable(megabytes: 16)
+    private var openingBook: PolyglotBook?
     
     private let outputLock = NSLock()
     private let flagLock = NSLock()
@@ -42,6 +43,9 @@ public final class Engine: @unchecked Sendable {
         case .setoption:
             if let parsed = parseUciSetOption(args: args) {
                 uciOptions.set(name: parsed.name, value: parsed.value)
+                if parsed.name.lowercased() == "book file" {
+                    reloadOpeningBook()
+                }
             }
         case .ucinewgame:
             haltSearch()
@@ -55,6 +59,10 @@ public final class Engine: @unchecked Sendable {
         case .go:
             haltSearch()
             let go = UciGoInput.parse(from: input)
+            if !go.infinite, let bookMove = probeOpeningBook() {
+                sendOutput(output: "bestmove \(moveToNotation(move: bookMove))")
+                return
+            }
             let limits = SearchLimits.from(
                 go: go,
                 sideToMove: game.boardState.currentTurnColor,
@@ -147,6 +155,27 @@ public final class Engine: @unchecked Sendable {
         flagLock.lock()
         defer { flagLock.unlock() }
         return stopSearch
+    }
+    
+    private func reloadOpeningBook() {
+        let path = uciOptions.bookFile.trimmingCharacters(in: .whitespacesAndNewlines)
+        if path.isEmpty {
+            openingBook = nil
+            return
+        }
+        openingBook = PolyglotBook(path: path)
+        if openingBook == nil {
+            sendOutput(output: "info string failed to load opening book \(path)")
+        }
+    }
+    
+    private func probeOpeningBook() -> Move? {
+        guard uciOptions.ownBook, let book = openingBook else { return nil }
+        guard let move = book.chooseMove(boardState: game.boardState, variety: uciOptions.bookVariety) else {
+            return nil
+        }
+        guard game.boardState.currentValidMoves.contains(move) else { return nil }
+        return move
     }
     
     private func applyPosition(args: [String]) {

@@ -2,3 +2,6 @@
 .swiftpm/
 *.xcodeproj/xcuserdata/
 .DS_Store
+
+# Local Polyglot opening books (drop a .bin here; tests generate their own)
+Books/*.bin
