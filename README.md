@@ -3,7 +3,7 @@
 
 UCI chess engine written in Swift. Play it on [Lichess](https://lichess.org/@/TheChessblazer).
 
-
+**Want to use it in your app?** → [docs/](docs/README.md) (Swift library + UCI subprocess guides)
 
 Build the UCI binary with:
 

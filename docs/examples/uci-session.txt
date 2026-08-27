@@ -1,0 +1,54 @@
+# Example UCI session
+# Run: .build/release/ChessblazerUCI
+# Paste lines one at a time (or pipe this file)
+
+uci
+# ← id name Chessblazer alpha 0.002
+# ← id author sergiusz
+# ← option name Hash type spin default 16 min 1 max 4096
+# ← option name Threads type spin default 1 min 1 max 256
+# ← … more options …
+# ← uciok
+
+setoption name Hash value 64
+setoption name Threads value 1
+isready
+# ← readyok
+
+ucinewgame
+position startpos
+go depth 8
+# ← info depth 1 score cp 38
+# ← info depth 2 score cp 25
+# ← …
+# ← info depth 8 score cp 22
+# ← bestmove e2e4
+
+position startpos moves e2e4
+go movetime 1000
+# ← info depth … (may vary)
+# ← bestmove e7e5
+
+position startpos moves e2e4 e7e5
+go depth 6
+# ← bestmove g1f3
+
+# optional: opening book (needs a real .bin on disk)
+# setoption name Book File value /path/to/book.bin
+# isready
+# ucinewgame
+# position startpos
+# go movetime 500
+# ← bestmove e2e4   (instant, from book)
+
+# optional: syzygy (needs tablebase files)
+# setoption name SyzygyPath value /path/to/syzygy
+# isready
+# position fen 4k3/8/8/8/8/8/8/4KQ2 w - - 0 1
+# go movetime 500
+# ← bestmove …      (instant DTZ when in tablebase)
+
+stop
+# only useful during go infinite or a long search — ignored if idle
+
+quit
