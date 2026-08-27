@@ -38,15 +38,17 @@ public final class Engine: @unchecked Sendable {
                 sendOutput(output: option.advertisement)
             }
             sendOutput(output: "uciok")
-        case .isready:
-            sendOutput(output: "readyok")
         case .setoption:
             if let parsed = parseUciSetOption(args: args) {
                 uciOptions.set(name: parsed.name, value: parsed.value)
                 if parsed.name.lowercased() == "book file" {
                     reloadOpeningBook()
+                } else if parsed.name.lowercased() == "syzygypath" {
+                    reloadSyzygy()
                 }
             }
+        case .isready:
+            sendOutput(output: "readyok")
         case .ucinewgame:
             haltSearch()
             transpositionTable.clear()
@@ -62,6 +64,11 @@ public final class Engine: @unchecked Sendable {
             let go = UciGoInput.parse(from: input)
             if !go.infinite, let bookMove = probeOpeningBook() {
                 sendOutput(output: "bestmove \(moveToNotation(move: bookMove))")
+                return
+            }
+            if !go.infinite, let tbMove = Syzygy.probeRootMove(game.boardState) {
+                sendOutput(output: "info string syzygy hit")
+                sendOutput(output: "bestmove \(moveToNotation(move: tbMove))")
                 return
             }
             let limits = SearchLimits.from(
@@ -107,18 +114,51 @@ public final class Engine: @unchecked Sendable {
         setStopSearch(false)
         let maximizingPlayer = game.boardState.currentTurnColor == .white
         let rootMoves = game.boardState.currentValidMoves
+        let threadCount = uciOptions.threadCount
+        transpositionTable.resize(megabytes: uciOptions.hashSizeMB)
+        transpositionTable.newSearch()
+        
+        // Helpers fill the shared TT; only the main thread emits info / bestmove.
+        // Syzygy DTZ already ran on the UCI thread before startSearch.
+        for helperIndex in 1..<threadCount {
+            searchGroup.enter()
+            let helperGame = Game.copyForSearch(from: game)
+            let helperLimits = SearchLimits(
+                maxDepth: limits.maxDepth,
+                allocatedTime: limits.allocatedTime,
+                hardTime: limits.hardTime
+            )
+            let thread = Thread { [self] in
+                defer { self.searchGroup.leave() }
+                _ = findBestMove(
+                    game: helperGame,
+                    limits: helperLimits,
+                    maximizingPlayer: maximizingPlayer,
+                    isCancelled: { self.isStopRequested() },
+                    onInfo: nil,
+                    tt: self.transpositionTable,
+                    beginNewSearch: false
+                )
+            }
+            thread.stackSize = Self.searchStackSize
+            thread.name = "chessblazer.helper.\(helperIndex)"
+            thread.qualityOfService = .userInitiated
+            thread.start()
+        }
+        
         searchGroup.enter()
-        let thread = Thread { [self] in
+        let main = Thread { [self] in
             defer { self.searchGroup.leave() }
-            self.transpositionTable.resize(megabytes: self.uciOptions.hashSizeMB)
             let move = findBestMove(
                 game: self.game,
                 limits: limits,
                 maximizingPlayer: maximizingPlayer,
                 isCancelled: { self.isStopRequested() },
                 onInfo: { self.sendOutput(output: $0) },
-                tt: self.transpositionTable
+                tt: self.transpositionTable,
+                beginNewSearch: false
             )
+            self.requestStop()
             let chosen: Move?
             if let move, rootMoves.contains(move) {
                 chosen = move
@@ -131,10 +171,10 @@ public final class Engine: @unchecked Sendable {
                 self.sendOutput(output: "bestmove 0000")
             }
         }
-        thread.stackSize = Self.searchStackSize
-        thread.name = "chessblazer.search"
-        thread.qualityOfService = .userInitiated
-        thread.start()
+        main.stackSize = Self.searchStackSize
+        main.name = "chessblazer.search"
+        main.qualityOfService = .userInitiated
+        main.start()
     }
     
     private func requestStop() {
@@ -167,6 +207,18 @@ public final class Engine: @unchecked Sendable {
         openingBook = PolyglotBook(path: path)
         if openingBook == nil {
             sendOutput(output: "info string failed to load opening book \(path)")
+        }
+    }
+    
+    private func reloadSyzygy() {
+        let path = uciOptions.syzygyPath
+        Syzygy.setPath(path)
+        if path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            sendOutput(output: "info string syzygy disabled")
+        } else if Syzygy.isReady {
+            sendOutput(output: "info string syzygy found \(Syzygy.maxPieces)-piece tables")
+        } else {
+            sendOutput(output: "info string syzygy path set but no tables found")
         }
     }
     

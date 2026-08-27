@@ -151,7 +151,7 @@ struct UciOption {
 struct EngineUciOptions {
     static let advertised: [UciOption] = [
         UciOption(name: "Hash", type: "spin", defaultValue: "16", min: 1, max: 4096),
-        // Single-threaded search; max is advertised so GUIs can set Threads: 4.
+        // Lazy SMP: Threads > 1 shares the TT across helper searches.
         UciOption(name: "Threads", type: "spin", defaultValue: "1", min: 1, max: 256),
         UciOption(name: "Ponder", type: "check", defaultValue: "false"),
         UciOption(name: "Move Overhead", type: "spin", defaultValue: "10", min: 0, max: 5000),
@@ -181,6 +181,10 @@ struct EngineUciOptions {
         min(max(Int(values["hash"] ?? "") ?? 16, 1), 4096)
     }
     
+    var threadCount: Int {
+        min(max(Int(values["threads"] ?? "") ?? 1, 1), 256)
+    }
+    
     var ownBook: Bool {
         check("ownbook", default: true)
     }
@@ -191,6 +195,10 @@ struct EngineUciOptions {
     
     var bookVariety: Bool {
         check("book variety", default: true)
+    }
+    
+    var syzygyPath: String {
+        values["syzygypath"] ?? ""
     }
     
     private func check(_ key: String, default fallback: Bool) -> Bool {

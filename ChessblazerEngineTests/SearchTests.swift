@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 #if SWIFT_PACKAGE
 @testable import Chessblazer
@@ -82,6 +83,51 @@ struct SearchTests {
         )
         #expect(move != nil)
         #expect(game.boardState.currentValidMoves.contains(move!))
+    }
+    
+    @Test func threadsOptionClampsAndDefaults() {
+        var options = EngineUciOptions()
+        #expect(options.threadCount == 1)
+        options.set(name: "Threads", value: "4")
+        #expect(options.threadCount == 4)
+        options.set(name: "Threads", value: "0")
+        #expect(options.threadCount == 1)
+        options.set(name: "Threads", value: "999")
+        #expect(options.threadCount == 256)
+    }
+    
+    @Test func sharedTtMateInOneWithTwoWorkers() {
+        let game = Game()
+        game.loadFromFen(fen: "6k1/8/6K1/8/8/8/8/4R3 w - - 0 1")
+        let helper = Game.copyForSearch(from: game)
+        let tt = TranspositionTable(megabytes: 1)
+        tt.newSearch()
+        let limits = SearchLimits(maxDepth: 3, allocatedTime: nil)
+        
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            defer { group.leave() }
+            _ = findBestMove(
+                game: helper,
+                limits: limits,
+                maximizingPlayer: true,
+                onInfo: nil,
+                tt: tt,
+                beginNewSearch: false
+            )
+        }
+        let move = findBestMove(
+            game: game,
+            limits: limits,
+            maximizingPlayer: true,
+            tt: tt,
+            beginNewSearch: false
+        )
+        group.wait()
+        #expect(moveToNotation(move: move!) == "e1e8")
+        #expect(game.boardState.undoStack.isEmpty)
+        #expect(helper.boardState.undoStack.isEmpty)
     }
     
     @Test func setOptionParsesSpacedNames() {

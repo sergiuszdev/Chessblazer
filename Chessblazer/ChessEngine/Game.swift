@@ -16,6 +16,14 @@ public final class Game {
         startNewGame()
     }
     
+    /// Snapshot for a helper Lazy-SMP thread (own undo stack, shared position history).
+    public static func copyForSearch(from other: Game) -> Game {
+        let copy = Game()
+        copy.boardState = other.boardState
+        copy.boardData = other.boardData
+        return copy
+    }
+    
     public func loadFromFen(fen: String) {
         boardState = GameEngine.loadBoardFromFen(fen: fen)
         refreshDerivedState()

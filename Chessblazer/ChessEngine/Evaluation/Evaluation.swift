@@ -251,6 +251,7 @@ enum PawnEvalCache {
     private static let entryCount = 16_384
     private static var entries = [Entry](repeating: Entry(), count: entryCount)
     private static let mask = UInt64(entryCount - 1)
+    private static let lock = NSLock()
     
     private struct Entry {
         var key: UInt64 = 0
@@ -260,21 +261,31 @@ enum PawnEvalCache {
     }
     
     static func clear() {
+        lock.lock()
+        defer { lock.unlock() }
         entries = [Entry](repeating: Entry(), count: entryCount)
     }
     
     static func score(whitePawns: Bitboard, blackPawns: Bitboard) -> (mg: Int, eg: Int) {
         let key = pawnStructureKey(white: whitePawns, black: blackPawns)
         let index = Int(key & mask)
+        lock.lock()
         let hit = entries[index]
         if hit.valid, hit.key == key {
-            return (Int(hit.mg), Int(hit.eg))
+            let result = (Int(hit.mg), Int(hit.eg))
+            lock.unlock()
+            return result
         }
+        lock.unlock()
+        
         let white = pawnStructureScore(pawns: whitePawns, enemy: blackPawns, passedMasks: EvalMasks.whitePassed)
         let black = pawnStructureScore(pawns: blackPawns, enemy: whitePawns, passedMasks: EvalMasks.blackPassed)
         let mg = white.mg - black.mg
         let eg = white.eg - black.eg
+        
+        lock.lock()
         entries[index] = Entry(key: key, mg: Int16(clamping: mg), eg: Int16(clamping: eg), valid: true)
+        lock.unlock()
         return (mg, eg)
     }
 }
@@ -528,6 +539,22 @@ func alphabeta(
     
     if game.boardState.isRepetitionDraw(ply: ply) {
         return 0
+    }
+    
+    if ply > 0, let wdl = Syzygy.probeWDL(game.boardState) {
+        let score = Syzygy.score(
+            wdl: wdl,
+            whiteToMove: game.boardState.currentTurnColor == .white,
+            ply: ply
+        )
+        context.tt.store(
+            key: game.boardState.zobristKey,
+            depth: max(depth, 1),
+            score: TranspositionTable.scoreToTT(score, ply: ply),
+            bound: .exact,
+            move: nil
+        )
+        return score
     }
     
     if depth <= 0 {
@@ -865,8 +892,13 @@ func findBestMove(
     maximizingPlayer: Bool,
     isCancelled: @escaping () -> Bool = { false },
     onInfo: ((String) -> Void)? = nil,
-    tt: TranspositionTable? = nil
+    tt: TranspositionTable? = nil,
+    beginNewSearch: Bool = true
 ) -> Move? {
+    if let tbMove = Syzygy.probeRootMove(game.boardState),
+       game.boardState.currentValidMoves.contains(tbMove) {
+        return tbMove
+    }
     let rootMoves = game.boardState.currentValidMoves
     let searched = iterativeDeepening(
         game: game,
@@ -874,7 +906,8 @@ func findBestMove(
         maximizingPlayer: maximizingPlayer,
         isCancelled: isCancelled,
         onInfo: onInfo,
-        tt: tt ?? TranspositionTable(megabytes: 1)
+        tt: tt ?? TranspositionTable(megabytes: 1),
+        beginNewSearch: beginNewSearch
     )
     if let searched, rootMoves.contains(searched) {
         return searched
@@ -888,9 +921,12 @@ func iterativeDeepening(
     maximizingPlayer: Bool,
     isCancelled: @escaping () -> Bool,
     onInfo: ((String) -> Void)?,
-    tt: TranspositionTable
+    tt: TranspositionTable,
+    beginNewSearch: Bool = true
 ) -> Move? {
-    tt.newSearch()
+    if beginNewSearch {
+        tt.newSearch()
+    }
     let context = SearchContext(limits: limits, isCancelled: isCancelled, onInfo: onInfo, tt: tt)
     var bestMove: Move? = nil
     var lastScore = 0

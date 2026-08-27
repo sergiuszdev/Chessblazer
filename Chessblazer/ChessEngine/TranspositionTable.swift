@@ -29,6 +29,7 @@ final class TranspositionTable {
     private var entries: [TTEntry]
     private var mask: UInt64
     private var generation: UInt8 = 1
+    private let lock = NSLock()
     
     init(megabytes: Int) {
         entries = []
@@ -42,12 +43,18 @@ final class TranspositionTable {
         mask = UInt64(count - 1)
     }
     
-    var capacity: Int { entries.count }
+    var capacity: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return entries.count
+    }
     
     func resize(megabytes: Int) {
         let mb = min(max(megabytes, 1), 4096)
         let bytes = mb * 1024 * 1024
         let count = Self.floorPowerOfTwo(max(bytes / MemoryLayout<TTEntry>.stride, 1))
+        lock.lock()
+        defer { lock.unlock() }
         if count == entries.count { return }
         entries = Array(repeating: TTEntry(), count: count)
         mask = UInt64(count - 1)
@@ -55,17 +62,23 @@ final class TranspositionTable {
     }
     
     func clear() {
+        lock.lock()
+        defer { lock.unlock() }
         entries = Array(repeating: TTEntry(), count: entries.count)
         generation = 1
     }
     
     /// Bump age so stale entries from earlier searches are preferred for replacement.
     func newSearch() {
+        lock.lock()
+        defer { lock.unlock() }
         generation &+= 1
         if generation == 0 { generation = 1 }
     }
     
     func probe(_ key: UInt64) -> TTHit? {
+        lock.lock()
+        defer { lock.unlock() }
         let index = Int(key & mask)
         let entry = entries[index]
         guard entry.bound != .empty, entry.key == key else { return nil }
@@ -80,6 +93,8 @@ final class TranspositionTable {
     func store(key: UInt64, depth: Int, score: Int, bound: TTBound, move: Move?) {
         guard bound != .empty else { return }
         guard score != Int.min, score != Int.max else { return }
+        lock.lock()
+        defer { lock.unlock() }
         let index = Int(key & mask)
         let current = entries[index]
         if !shouldReplace(current, key: key, depth: depth) {
