@@ -17,7 +17,7 @@ Check it out on [Lichess](https://lichess.org/@/TheChessblazer)
 <img width="720" height="840" alt="lichess-game-BoJ1PFjF-white" src="https://github.com/user-attachments/assets/a8a1bc98-23af-44ca-a4ec-19aa0f65e023" />
 
 
-<i>it's little smarter now, it even once beat stockfish level 1</i>
+<i>it's a bit smarter now — opening book, syzygy tablebases, and it even once beat stockfish level 1</i>
 
 ## Game logic
 ### Implemented
@@ -42,17 +42,25 @@ Check it out on [Lichess](https://lichess.org/@/TheChessblazer)
 - Zobrist hashing
 - Null move pruning
 - Late move reductions
-- Evaluation with game phase, pawn structure, mobility and king safety
+- Aspiration windows
+- Reverse futility / razoring / futility pruning
+- Lazy SMP (`Threads` UCI option)
+- Polyglot opening book (`Book File`, `OwnBook`, `Book Variety`)
+- Syzygy tablebases (WDL in search, DTZ at root via `SyzygyPath`)
+- Evaluation with game phase, pawn structure (passed pawns), bishop pair, rook files, mobility and king safety
 ### Not implemented yet
-- Opening book
+- NNUE evaluation
 
 ## UCI
 ### Implemented
 - UCI protocol
 - talking to Lichess (it already played some games there)
+- `Hash`, `Threads`, `Move Overhead`, `Book File`, `SyzygyPath` and the usual UCI options
+
+Point `Book File` at a polyglot `.bin` and `SyzygyPath` at a folder of `.rtbw` / `.rtbz` files if you want those.
 
 ## Next steps
-- Opening book
+- NNUE evaluation
 
 ## Perft results
 <a href="https://www.chessprogramming.org/Perft_Results">I use this data to compare with my results</a>
