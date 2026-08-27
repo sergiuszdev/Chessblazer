@@ -45,8 +45,8 @@ enum Syzygy {
     private static let lock = NSLock()
     /// Serializes Fathom probes (built with TB_NO_THREADS for Xcode/SPM).
     private static let probeLock = NSLock()
-    private static var configuredPath = ""
-    private static var largestPieces = 0
+    nonisolated(unsafe) private static var configuredPath = ""
+    nonisolated(unsafe) private static var largestPieces = 0
     
     static var maxPieces: Int {
         lock.lock()

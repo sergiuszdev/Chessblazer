@@ -249,7 +249,7 @@ private let rookSemiOpenFileEg = 6
 /// Caches pawn-structure mg/eg so piece moves reuse the same pawn eval.
 enum PawnEvalCache {
     private static let entryCount = 16_384
-    private static var entries = [Entry](repeating: Entry(), count: entryCount)
+    nonisolated(unsafe) private static var entries = [Entry](repeating: Entry(), count: entryCount)
     private static let mask = UInt64(entryCount - 1)
     private static let lock = NSLock()
     

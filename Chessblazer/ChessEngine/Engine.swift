@@ -67,7 +67,6 @@ public final class Engine: @unchecked Sendable {
                 return
             }
             if !go.infinite, let tbMove = Syzygy.probeRootMove(game.boardState) {
-                sendOutput(output: "info string syzygy hit")
                 sendOutput(output: "bestmove \(moveToNotation(move: tbMove))")
                 return
             }
@@ -205,21 +204,12 @@ public final class Engine: @unchecked Sendable {
             return
         }
         openingBook = PolyglotBook(path: path)
-        if openingBook == nil {
-            sendOutput(output: "info string failed to load opening book \(path)")
-        }
+        // Stay silent on setoption — lichess-bot treats stray info strings as errors.
     }
     
     private func reloadSyzygy() {
-        let path = uciOptions.syzygyPath
-        Syzygy.setPath(path)
-        if path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            sendOutput(output: "info string syzygy disabled")
-        } else if Syzygy.isReady {
-            sendOutput(output: "info string syzygy found \(Syzygy.maxPieces)-piece tables")
-        } else {
-            sendOutput(output: "info string syzygy path set but no tables found")
-        }
+        // Load quietly; UCI hosts (lichess-bot) only expect readyok/uciok during handshake.
+        Syzygy.setPath(uciOptions.syzygyPath)
     }
     
     private func probeOpeningBook() -> Move? {
