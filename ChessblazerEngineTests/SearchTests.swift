@@ -39,6 +39,17 @@ struct SearchTests {
         #expect(game.boardState.undoStack.isEmpty)
     }
     
+    @Test func checkExtensionStillEscapesAndDoesNotLeak() {
+        // Black is in check from the rook and must find a legal escape.
+        let game = Game()
+        game.loadFromFen(fen: "4k3/8/8/8/8/8/4R3/4K3 b - - 0 1")
+        #expect(checkIfCheck(boardState: game.boardState))
+        let move = findBestMove(game: game, depth: 3, maximizingPlayer: false)
+        #expect(move != nil)
+        #expect(game.boardState.currentValidMoves.contains(move!))
+        #expect(game.boardState.undoStack.isEmpty)
+    }
+    
     @Test func stalemateIsDraw() {
         let game = Game()
         game.loadFromFen(fen: "k7/8/1Q6/8/8/8/8/K7 b - - 0 1")

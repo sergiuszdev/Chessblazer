@@ -50,6 +50,7 @@ public final class Engine: @unchecked Sendable {
         case .ucinewgame:
             haltSearch()
             transpositionTable.clear()
+            PawnEvalCache.clear()
             game.startNewGame()
             
         case .position:

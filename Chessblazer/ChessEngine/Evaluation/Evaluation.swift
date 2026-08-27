@@ -172,6 +172,8 @@ public func evaluate(bitboards: PieceBitboards) -> Int {
     let phase = GamePhase.of(bitboards)
     return countMaterial(bitboards: bitboards, phase: phase)
         + evaluatePawnStructure(bitboards: bitboards, phase: phase)
+        + evaluateBishopPair(bitboards: bitboards, phase: phase)
+        + evaluateRookFiles(bitboards: bitboards, phase: phase)
         + evaluateMobility(bitboards: bitboards, occupancy: occupancy, phase: phase)
         + evaluateKingSafety(bitboards: bitboards, occupancy: occupancy, phase: phase)
 }
@@ -237,17 +239,114 @@ private enum EvalMasks {
 
 private let doubledPawnPenalty = 16
 private let isolatedPawnPenalty = 12
+private let bishopPairBonusMg = 28
+private let bishopPairBonusEg = 42
+private let rookOpenFileMg = 20
+private let rookOpenFileEg = 12
+private let rookSemiOpenFileMg = 10
+private let rookSemiOpenFileEg = 6
+
+/// Caches pawn-structure mg/eg so piece moves reuse the same pawn eval.
+enum PawnEvalCache {
+    private static let entryCount = 16_384
+    private static var entries = [Entry](repeating: Entry(), count: entryCount)
+    private static let mask = UInt64(entryCount - 1)
+    
+    private struct Entry {
+        var key: UInt64 = 0
+        var mg: Int16 = 0
+        var eg: Int16 = 0
+        var valid = false
+    }
+    
+    static func clear() {
+        entries = [Entry](repeating: Entry(), count: entryCount)
+    }
+    
+    static func score(whitePawns: Bitboard, blackPawns: Bitboard) -> (mg: Int, eg: Int) {
+        let key = pawnStructureKey(white: whitePawns, black: blackPawns)
+        let index = Int(key & mask)
+        let hit = entries[index]
+        if hit.valid, hit.key == key {
+            return (Int(hit.mg), Int(hit.eg))
+        }
+        let white = pawnStructureScore(pawns: whitePawns, enemy: blackPawns, passedMasks: EvalMasks.whitePassed)
+        let black = pawnStructureScore(pawns: blackPawns, enemy: whitePawns, passedMasks: EvalMasks.blackPassed)
+        let mg = white.mg - black.mg
+        let eg = white.eg - black.eg
+        entries[index] = Entry(key: key, mg: Int16(clamping: mg), eg: Int16(clamping: eg), valid: true)
+        return (mg, eg)
+    }
+}
+
+func pawnStructureKey(white: Bitboard, black: Bitboard) -> UInt64 {
+    var key: UInt64 = 0
+    var remaining = white
+    while remaining != 0 {
+        let square = Bitboard.popLSB(&remaining)
+        key ^= Zobrist.pieceKey(piece: Piece.ColoredPieces.whitePawn.rawValue, square: square)
+    }
+    remaining = black
+    while remaining != 0 {
+        let square = Bitboard.popLSB(&remaining)
+        key ^= Zobrist.pieceKey(piece: Piece.ColoredPieces.blackPawn.rawValue, square: square)
+    }
+    return key
+}
 
 func evaluatePawnStructure(bitboards: PieceBitboards, phase: Int) -> Int {
     let whitePawns = bitboards[Piece.ColoredPieces.whitePawn.rawValue]
     let blackPawns = bitboards[Piece.ColoredPieces.blackPawn.rawValue]
-    let white = pawnStructureScore(pawns: whitePawns, enemy: blackPawns, passedMasks: EvalMasks.whitePassed)
-    let black = pawnStructureScore(pawns: blackPawns, enemy: whitePawns, passedMasks: EvalMasks.blackPassed)
+    let score = PawnEvalCache.score(whitePawns: whitePawns, blackPawns: blackPawns)
+    return GamePhase.interpolate(middlegame: score.mg, endgame: score.eg, phase: phase)
+}
+
+func evaluateBishopPair(bitboards: PieceBitboards, phase: Int) -> Int {
+    let whitePair = bitboards[Piece.ColoredPieces.whiteBishop.rawValue].nonzeroBitCount >= 2
+    let blackPair = bitboards[Piece.ColoredPieces.blackBishop.rawValue].nonzeroBitCount >= 2
+    let mg = (whitePair ? bishopPairBonusMg : 0) - (blackPair ? bishopPairBonusMg : 0)
+    let eg = (whitePair ? bishopPairBonusEg : 0) - (blackPair ? bishopPairBonusEg : 0)
+    return GamePhase.interpolate(middlegame: mg, endgame: eg, phase: phase)
+}
+
+func evaluateRookFiles(bitboards: PieceBitboards, phase: Int) -> Int {
+    let whitePawns = bitboards[Piece.ColoredPieces.whitePawn.rawValue]
+    let blackPawns = bitboards[Piece.ColoredPieces.blackPawn.rawValue]
+    let white = rookFileScore(
+        rooks: bitboards[Piece.ColoredPieces.whiteRook.rawValue],
+        friendlyPawns: whitePawns,
+        enemyPawns: blackPawns
+    )
+    let black = rookFileScore(
+        rooks: bitboards[Piece.ColoredPieces.blackRook.rawValue],
+        friendlyPawns: blackPawns,
+        enemyPawns: whitePawns
+    )
     return GamePhase.interpolate(
         middlegame: white.mg - black.mg,
         endgame: white.eg - black.eg,
         phase: phase
     )
+}
+
+private func rookFileScore(rooks: Bitboard, friendlyPawns: Bitboard, enemyPawns: Bitboard) -> (mg: Int, eg: Int) {
+    var mg = 0
+    var eg = 0
+    var remaining = rooks
+    while remaining != 0 {
+        let square = Bitboard.popLSB(&remaining)
+        let fileMask = EvalMasks.files[square % 8]
+        let friendlyOnFile = friendlyPawns & fileMask != 0
+        let enemyOnFile = enemyPawns & fileMask != 0
+        if !friendlyOnFile && !enemyOnFile {
+            mg += rookOpenFileMg
+            eg += rookOpenFileEg
+        } else if !friendlyOnFile {
+            mg += rookSemiOpenFileMg
+            eg += rookSemiOpenFileEg
+        }
+    }
+    return (mg, eg)
 }
 
 private func pawnStructureScore(pawns: Bitboard, enemy: Bitboard, passedMasks: [Bitboard]) -> (mg: Int, eg: Int) {
@@ -553,7 +652,7 @@ func alphabeta(
     func searchMove(_ move: Move, index: Int, isFirst: Bool) -> Int {
         game.play(move)
         defer { game.unplay() }
-        let fullDepth = depth - 1
+        let fullDepth = depth - 1 + (inCheck ? 1 : 0)
         if isFirst {
             return alphabeta(
                 game: game,

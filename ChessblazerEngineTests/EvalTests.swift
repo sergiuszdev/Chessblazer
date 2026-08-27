@@ -118,4 +118,56 @@ struct EvalTests {
         )
         #expect(shieldedSafety > exposedSafety)
     }
+    
+    @Test func bishopPairBeatsLoneBishop() {
+        let pair = Game()
+        pair.loadFromFen(fen: "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1")
+        let lone = Game()
+        lone.loadFromFen(fen: "4k3/8/8/8/8/8/8/3BK3 w - - 0 1")
+        #expect(evaluateBishopPair(bitboards: pair.boardState.bitboards, phase: GamePhase.full) > 0)
+        #expect(evaluateBishopPair(bitboards: lone.boardState.bitboards, phase: GamePhase.full) == 0)
+    }
+    
+    @Test func rookOnOpenFileBeatsClosedFile() {
+        let openFile = Game()
+        openFile.loadFromFen(fen: "4k3/8/8/8/8/8/8/R3K3 w - - 0 1")
+        let closed = Game()
+        closed.loadFromFen(fen: "4k3/p7/8/8/8/8/P7/R3K3 w - - 0 1")
+        #expect(
+            evaluateRookFiles(bitboards: openFile.boardState.bitboards, phase: GamePhase.full)
+                > evaluateRookFiles(bitboards: closed.boardState.bitboards, phase: GamePhase.full)
+        )
+    }
+    
+    @Test func rookOnSemiOpenFileBeatsClosedFile() {
+        let semi = Game()
+        semi.loadFromFen(fen: "4k3/p7/8/8/8/8/8/R3K3 w - - 0 1")
+        let closed = Game()
+        closed.loadFromFen(fen: "4k3/p7/8/8/8/8/P7/R3K3 w - - 0 1")
+        #expect(
+            evaluateRookFiles(bitboards: semi.boardState.bitboards, phase: GamePhase.full)
+                > evaluateRookFiles(bitboards: closed.boardState.bitboards, phase: GamePhase.full)
+        )
+    }
+    
+    @Test func pawnHashReturnsSameScoreForSameStructure() {
+        PawnEvalCache.clear()
+        let a = Game()
+        a.loadFromFen(fen: "4k3/pppp4/8/8/8/8/PPPP4/4K3 w - - 0 1")
+        let first = evaluatePawnStructure(bitboards: a.boardState.bitboards, phase: GamePhase.full)
+        let withPieces = Game()
+        withPieces.loadFromFen(fen: "4k3/pppp4/8/8/8/8/PPPP4/RN2KBNR w - - 0 1")
+        let second = evaluatePawnStructure(bitboards: withPieces.boardState.bitboards, phase: GamePhase.full)
+        #expect(first == second)
+        #expect(
+            pawnStructureKey(
+                white: a.boardState.bitboards[Piece.ColoredPieces.whitePawn.rawValue],
+                black: a.boardState.bitboards[Piece.ColoredPieces.blackPawn.rawValue]
+            )
+            == pawnStructureKey(
+                white: withPieces.boardState.bitboards[Piece.ColoredPieces.whitePawn.rawValue],
+                black: withPieces.boardState.bitboards[Piece.ColoredPieces.blackPawn.rawValue]
+            )
+        )
+    }
 }
