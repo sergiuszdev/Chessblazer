@@ -109,7 +109,6 @@
 		318129202C5277FA002F1E40 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
 		318129242C530BB0002F1E40 /* Move.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Move.swift; sourceTree = "<group>"; };
 		318129262C5440A0002F1E40 /* BoardPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardPrinter.swift; sourceTree = "<group>"; };
-		319A81B72CC07AD500BDD48D /* showcase2.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = showcase2.gif; sourceTree = "<group>"; };
 		31A0B0157CB83F7B0077E27A /* Zobrist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zobrist.swift; sourceTree = "<group>"; };
 		31A0B0167CB83F7B0077E27A /* Polyglot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Polyglot.swift; sourceTree = "<group>"; };
 		31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolyglotKeys.swift; sourceTree = "<group>"; };
@@ -128,7 +127,6 @@
 		31B10B472CB89B780077E27A /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
 		31C0C0157CB83F7B0077E27A /* PinCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinCheck.swift; sourceTree = "<group>"; };
 		31CB05332C8D186A007C4A1A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		31CB05352C8D1DBB007C4A1A /* showcase.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = showcase.gif; sourceTree = "<group>"; };
 		31EF3B4B2C61676200DF07A3 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		31EF3B5F2C61873300DF07A3 /* Evaluation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Evaluation.swift; sourceTree = "<group>"; };
 		31EF3B672C622DE300DF07A3 /* PieceSquareTables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PieceSquareTables.swift; sourceTree = "<group>"; };
@@ -203,7 +201,6 @@
 		318129062C51B369002F1E40 = {
 			isa = PBXGroup;
 			children = (
-				31CB05342C8D1D9E007C4A1A /* res */,
 				31CB05332C8D186A007C4A1A /* README.md */,
 				318129112C51B369002F1E40 /* Chessblazer */,
 				318129122C51B369002F1E40 /* EngineApp.swift */,
@@ -273,15 +270,6 @@
 				31A0B01B7CB83F7B0077E27A /* chessblazer_fathom.c */,
 			);
 			name = Fathom;
-			sourceTree = "<group>";
-		};
-		31CB05342C8D1D9E007C4A1A /* res */ = {
-			isa = PBXGroup;
-			children = (
-				31CB05352C8D1DBB007C4A1A /* showcase.gif */,
-				319A81B72CC07AD500BDD48D /* showcase2.gif */,
-			);
-			path = res;
 			sourceTree = "<group>";
 		};
 		31EF3B4A2C61676200DF07A3 /* Frameworks */ = {
