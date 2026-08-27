@@ -38,15 +38,17 @@ public final class Engine: @unchecked Sendable {
                 sendOutput(output: option.advertisement)
             }
             sendOutput(output: "uciok")
-        case .isready:
-            sendOutput(output: "readyok")
         case .setoption:
             if let parsed = parseUciSetOption(args: args) {
                 uciOptions.set(name: parsed.name, value: parsed.value)
                 if parsed.name.lowercased() == "book file" {
                     reloadOpeningBook()
+                } else if parsed.name.lowercased() == "syzygypath" {
+                    reloadSyzygy()
                 }
             }
+        case .isready:
+            sendOutput(output: "readyok")
         case .ucinewgame:
             haltSearch()
             transpositionTable.clear()
@@ -62,6 +64,11 @@ public final class Engine: @unchecked Sendable {
             let go = UciGoInput.parse(from: input)
             if !go.infinite, let bookMove = probeOpeningBook() {
                 sendOutput(output: "bestmove \(moveToNotation(move: bookMove))")
+                return
+            }
+            if !go.infinite, let tbMove = Syzygy.probeRootMove(game.boardState) {
+                sendOutput(output: "info string syzygy hit")
+                sendOutput(output: "bestmove \(moveToNotation(move: tbMove))")
                 return
             }
             let limits = SearchLimits.from(
@@ -167,6 +174,18 @@ public final class Engine: @unchecked Sendable {
         openingBook = PolyglotBook(path: path)
         if openingBook == nil {
             sendOutput(output: "info string failed to load opening book \(path)")
+        }
+    }
+    
+    private func reloadSyzygy() {
+        let path = uciOptions.syzygyPath
+        Syzygy.setPath(path)
+        if path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            sendOutput(output: "info string syzygy disabled")
+        } else if Syzygy.isReady {
+            sendOutput(output: "info string syzygy found \(Syzygy.maxPieces)-piece tables")
+        } else {
+            sendOutput(output: "info string syzygy path set but no tables found")
         }
     }
     

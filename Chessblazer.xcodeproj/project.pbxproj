@@ -55,6 +55,12 @@
 		31A0B01792CB83F7B0077E27 /* PolyglotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */; };
 		31A0B01882D484A88000CCDF /* See.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0187CB83F7B0077E27A /* See.swift */; };
 		31A0B01892CB83F7B0077E27 /* See.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0187CB83F7B0077E27A /* See.swift */; };
+		31A0B01982D484A88000CCDF /* Syzygy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0197CB83F7B0077E27A /* Syzygy.swift */; };
+		31A0B01992CB83F7B0077E27 /* Syzygy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0197CB83F7B0077E27A /* Syzygy.swift */; };
+		31A0B01A82D484A88000CCDF /* tbprobe.c in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B01A7CB83F7B0077E27A /* tbprobe.c */; };
+		31A0B01A92CB83F7B0077E27 /* tbprobe.c in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B01A7CB83F7B0077E27A /* tbprobe.c */; };
+		31A0B01B82D484A88000CCDF /* chessblazer_fathom.c in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B01B7CB83F7B0077E27A /* chessblazer_fathom.c */; };
+		31A0B01B92CB83F7B0077E27 /* chessblazer_fathom.c in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B01B7CB83F7B0077E27A /* chessblazer_fathom.c */; };
 		31AC3B692D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
 		31AC3B6A2D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
 		31B0111582D484A88000CCDF /* TranspositionTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B011157CB83F7B0077E27A /* TranspositionTable.swift */; };
@@ -108,6 +114,10 @@
 		31A0B0167CB83F7B0077E27A /* Polyglot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Polyglot.swift; sourceTree = "<group>"; };
 		31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolyglotKeys.swift; sourceTree = "<group>"; };
 		31A0B0187CB83F7B0077E27A /* See.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = See.swift; sourceTree = "<group>"; };
+		31A0B0197CB83F7B0077E27A /* Syzygy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Syzygy.swift; sourceTree = "<group>"; };
+		31A0B01A7CB83F7B0077E27A /* tbprobe.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = tbprobe.c; path = Vendor/Fathom/tbprobe.c; sourceTree = SOURCE_ROOT; };
+		31A0B01B7CB83F7B0077E27A /* chessblazer_fathom.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = chessblazer_fathom.c; path = Vendor/Fathom/chessblazer_fathom.c; sourceTree = SOURCE_ROOT; };
+		31A0B01C7CB83F7B0077E27A /* Chessblazer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Chessblazer-Bridging-Header.h"; sourceTree = "<group>"; };
 		31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotationParser.swift; sourceTree = "<group>"; };
 		31B011157CB83F7B0077E27A /* TranspositionTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranspositionTable.swift; sourceTree = "<group>"; };
 		31B10B2B2CB83F7B0077E27A /* BoardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardState.swift; sourceTree = "<group>"; };
@@ -235,6 +245,9 @@
 				31A0B0167CB83F7B0077E27A /* Polyglot.swift */,
 				31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */,
 				31A0B0187CB83F7B0077E27A /* See.swift */,
+				31A0B0197CB83F7B0077E27A /* Syzygy.swift */,
+				31A0B01D7CB83F7B0077E27A /* Syzygy */,
+				31A0B01E7CB83F7B0077E27A /* Fathom */,
 				31B011157CB83F7B0077E27A /* TranspositionTable.swift */,
 				3181291A2C51B3EC002F1E40 /* Pieces.swift */,
 				31B10B472CB89B780077E27A /* GameEngine.swift */,
@@ -243,6 +256,23 @@
 				3147A5F42C893D1B007E132F /* Perft.swift */,
 			);
 			path = ChessEngine;
+			sourceTree = "<group>";
+		};
+		31A0B01D7CB83F7B0077E27A /* Syzygy */ = {
+			isa = PBXGroup;
+			children = (
+				31A0B01C7CB83F7B0077E27A /* Chessblazer-Bridging-Header.h */,
+			);
+			path = Syzygy;
+			sourceTree = "<group>";
+		};
+		31A0B01E7CB83F7B0077E27A /* Fathom */ = {
+			isa = PBXGroup;
+			children = (
+				31A0B01A7CB83F7B0077E27A /* tbprobe.c */,
+				31A0B01B7CB83F7B0077E27A /* chessblazer_fathom.c */,
+			);
+			name = Fathom;
 			sourceTree = "<group>";
 		};
 		31CB05342C8D1D9E007C4A1A /* res */ = {
@@ -389,6 +419,9 @@
 				31A0B01682D484A88000CCDF /* Polyglot.swift in Sources */,
 				31A0B01782D484A88000CCDF /* PolyglotKeys.swift in Sources */,
 				31A0B01882D484A88000CCDF /* See.swift in Sources */,
+				31A0B01982D484A88000CCDF /* Syzygy.swift in Sources */,
+				31A0B01A82D484A88000CCDF /* tbprobe.c in Sources */,
+				31A0B01B82D484A88000CCDF /* chessblazer_fathom.c in Sources */,
 				31B0111582D484A88000CCDF /* TranspositionTable.swift in Sources */,
 				3103B6BF2D484A88000CCDFA /* Pieces.swift in Sources */,
 				3103B6C02D484A88000CCDFA /* GameEngine.swift in Sources */,
@@ -418,6 +451,9 @@
 				31A0B01692CB83F7B0077E27 /* Polyglot.swift in Sources */,
 				31A0B01792CB83F7B0077E27 /* PolyglotKeys.swift in Sources */,
 				31A0B01892CB83F7B0077E27 /* See.swift in Sources */,
+				31A0B01992CB83F7B0077E27 /* Syzygy.swift in Sources */,
+				31A0B01A92CB83F7B0077E27 /* tbprobe.c in Sources */,
+				31A0B01B92CB83F7B0077E27 /* chessblazer_fathom.c in Sources */,
 				31B0111592CB83F7B0077E27 /* TranspositionTable.swift in Sources */,
 				31EF3B682C622DE300DF07A3 /* PieceSquareTables.swift in Sources */,
 				317F00902C584924000E4AD6 /* GenerateMoves.swift in Sources */,
@@ -445,12 +481,23 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"TB_NO_HELPER_API=1",
+					"TB_NO_THREADS=1",
+					"$(inherited)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/Fathom/include",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sergiuszdev.ChessblazerEngineTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Chessblazer/ChessEngine/Syzygy/Chessblazer-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -460,12 +507,22 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"TB_NO_HELPER_API=1",
+					"TB_NO_THREADS=1",
+					"$(inherited)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/Fathom/include",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sergiuszdev.ChessblazerEngineTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Chessblazer/ChessEngine/Syzygy/Chessblazer-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
@@ -603,7 +660,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"TB_NO_HELPER_API=1",
+					"TB_NO_THREADS=1",
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/Fathom/include",
+					"$(inherited)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Chessblazer/ChessEngine/Syzygy/Chessblazer-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -614,7 +682,17 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"TB_NO_HELPER_API=1",
+					"TB_NO_THREADS=1",
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/Fathom/include",
+					"$(inherited)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Chessblazer/ChessEngine/Syzygy/Chessblazer-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;

@@ -193,6 +193,10 @@ struct EngineUciOptions {
         check("book variety", default: true)
     }
     
+    var syzygyPath: String {
+        values["syzygypath"] ?? ""
+    }
+    
     private func check(_ key: String, default fallback: Bool) -> Bool {
         guard let raw = values[key]?.lowercased() else { return fallback }
         if raw == "false" || raw == "0" { return false }

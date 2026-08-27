@@ -530,6 +530,22 @@ func alphabeta(
         return 0
     }
     
+    if ply > 0, let wdl = Syzygy.probeWDL(game.boardState) {
+        let score = Syzygy.score(
+            wdl: wdl,
+            whiteToMove: game.boardState.currentTurnColor == .white,
+            ply: ply
+        )
+        context.tt.store(
+            key: game.boardState.zobristKey,
+            depth: max(depth, 1),
+            score: TranspositionTable.scoreToTT(score, ply: ply),
+            bound: .exact,
+            move: nil
+        )
+        return score
+    }
+    
     if depth <= 0 {
         return quiesce(game: game, alpha: alpha, beta: beta, maximizingPlayer: maximizingPlayer, ply: ply, qsPly: 0, context: context)
     }
@@ -867,6 +883,10 @@ func findBestMove(
     onInfo: ((String) -> Void)? = nil,
     tt: TranspositionTable? = nil
 ) -> Move? {
+    if let tbMove = Syzygy.probeRootMove(game.boardState),
+       game.boardState.currentValidMoves.contains(tbMove) {
+        return tbMove
+    }
     let rootMoves = game.boardState.currentValidMoves
     let searched = iterativeDeepening(
         game: game,

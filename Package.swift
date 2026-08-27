@@ -14,7 +14,21 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "Fathom",
+            path: "Vendor/Fathom",
+            exclude: [
+                "tbchess.c",
+            ],
+            publicHeadersPath: "include",
+            cSettings: [
+                .headerSearchPath("include"),
+                .define("TB_NO_HELPER_API"),
+                .define("TB_NO_THREADS"),
+            ]
+        ),
+        .target(
             name: "Chessblazer",
+            dependencies: ["Fathom"],
             path: "Chessblazer",
             exclude: ["todo.md"]
         ),
