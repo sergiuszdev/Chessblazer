@@ -132,11 +132,12 @@ func orderMoves(
     _ moves: inout [Move],
     ttMove: Move?,
     killers: (Move?, Move?) = (nil, nil),
-    history: [[Int]]? = nil
+    history: [[Int]]? = nil,
+    boardState: BoardState? = nil
 ) {
     moves.sort { lhs, rhs in
-        moveOrderScore(lhs, ttMove: ttMove, killers: killers, history: history)
-            > moveOrderScore(rhs, ttMove: ttMove, killers: killers, history: history)
+        moveOrderScore(lhs, ttMove: ttMove, killers: killers, history: history, boardState: boardState)
+            > moveOrderScore(rhs, ttMove: ttMove, killers: killers, history: history, boardState: boardState)
     }
 }
 
@@ -151,10 +152,22 @@ private func moveOrderScore(
     _ move: Move,
     ttMove: Move?,
     killers: (Move?, Move?),
-    history: [[Int]]?
+    history: [[Int]]?,
+    boardState: BoardState?
 ) -> Int {
     if isSameMove(move, ttMove) { return 1_000_000 }
-    if isTactical(move) { return 500_000 + move.moveValue() }
+    if isTactical(move) {
+        var score = 500_000 + move.moveValue()
+        if let boardState {
+            score += seeScore(
+                move: move,
+                bitboards: boardState.bitboards,
+                occupancy: boardState.occupancy,
+                sideToMove: boardState.currentTurnColor
+            )
+        }
+        return score
+    }
     if isSameMove(move, killers.0) { return 400_000 }
     if isSameMove(move, killers.1) { return 300_000 }
     guard let history, let target = move.targetSquare, move.pieceValue != 0 else { return 0 }

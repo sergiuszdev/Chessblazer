@@ -91,12 +91,13 @@ public final class Game {
             } else {
                 boardData.gameResult = .draw
             }
-        } else if boardState.isRepetitionDraw() {
+        } else if boardState.isRepetitionDraw() || boardState.isFiftyMoveDraw(hasLegalMoves: true) {
             boardData.hasGameEnded = true
             boardData.gameResult = .draw
         } else {
             boardData.hasGameEnded = false
             boardData.gameResult = .none
         }
+        boardData.halfMoves = boardState.halfmoveClock
     }
 }

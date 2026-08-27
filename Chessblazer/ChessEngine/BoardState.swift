@@ -87,6 +87,7 @@ struct UndoInfo {
     var attackBitboard: Bitboard
     var enPassant: String
     var zobristKey: UInt64
+    var halfmoveClock: Int
     var currentValidMoves: [Move]?
 }
 
@@ -100,6 +101,7 @@ public struct BoardState {
     public var bitboards = PieceBitboards()
     public var enPassant = "-"
     public var zobristKey: UInt64 = 0
+    public var halfmoveClock = 0
     public var currentValidMoves: [Move] = [Move]()
     
     public init(currentTurnColor: Piece.Color) {
@@ -284,6 +286,7 @@ public struct BoardState {
                 attackBitboard: attackBitboard,
                 enPassant: enPassant,
                 zobristKey: zobristKey,
+                halfmoveClock: halfmoveClock,
                 currentValidMoves: snapshotLegalMoves ? currentValidMoves : nil
             )
         )
@@ -291,6 +294,7 @@ public struct BoardState {
         updateCastleRights(for: move)
         lastMove = move
         enPassant = "-"
+        halfmoveClock = resetsFiftyMove(move) ? 0 : halfmoveClock + 1
         currentTurnColor = currentTurnColor.getOppositeColor()
         refreshOccupancy()
         attackBitboard = generateAllAttackedSquares(
@@ -318,6 +322,7 @@ public struct BoardState {
                 attackBitboard: attackBitboard,
                 enPassant: enPassant,
                 zobristKey: zobristKey,
+                halfmoveClock: halfmoveClock,
                 currentValidMoves: nil
             )
         )
@@ -346,9 +351,14 @@ public struct BoardState {
         attackBitboard = undo.attackBitboard
         enPassant = undo.enPassant
         zobristKey = undo.zobristKey
+        halfmoveClock = undo.halfmoveClock
         if let moves = undo.currentValidMoves {
             currentValidMoves = moves
         }
+    }
+    
+    func isFiftyMoveDraw(hasLegalMoves: Bool) -> Bool {
+        hasLegalMoves && halfmoveClock >= 100
     }
     
     /// Draw if this position occurred twice in game history (threefold), or once
