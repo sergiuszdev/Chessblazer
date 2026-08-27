@@ -14,10 +14,12 @@ swift build -c release --product ChessblazerUCI
 # Engine
 Check it out on [Lichess](https://lichess.org/@/TheChessblazer)
 ## Current state
-<img width="720" height="840" alt="lichess-game-BoJ1PFjF-white" src="https://github.com/user-attachments/assets/a8a1bc98-23af-44ca-a4ec-19aa0f65e023" />
+
+<img width="720" height="840" alt="lichess-game-L0pSkUpE-white" src="https://github.com/user-attachments/assets/69f696c6-543e-4898-a5a7-0b8b31270aea" />
 
 
-<i>it's a bit smarter now — opening book, syzygy tablebases, and it even once beat stockfish level 1</i>
+
+<i>it's a bit smarter now — opening book, syzygy tablebases, and it even once beat stockfish level 6</i>
 
 ## Game logic
 ### Implemented
