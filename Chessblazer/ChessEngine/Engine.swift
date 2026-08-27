@@ -114,18 +114,51 @@ public final class Engine: @unchecked Sendable {
         setStopSearch(false)
         let maximizingPlayer = game.boardState.currentTurnColor == .white
         let rootMoves = game.boardState.currentValidMoves
+        let threadCount = uciOptions.threadCount
+        transpositionTable.resize(megabytes: uciOptions.hashSizeMB)
+        transpositionTable.newSearch()
+        
+        // Helpers fill the shared TT; only the main thread emits info / bestmove.
+        // Syzygy DTZ already ran on the UCI thread before startSearch.
+        for helperIndex in 1..<threadCount {
+            searchGroup.enter()
+            let helperGame = Game.copyForSearch(from: game)
+            let helperLimits = SearchLimits(
+                maxDepth: limits.maxDepth,
+                allocatedTime: limits.allocatedTime,
+                hardTime: limits.hardTime
+            )
+            let thread = Thread { [self] in
+                defer { self.searchGroup.leave() }
+                _ = findBestMove(
+                    game: helperGame,
+                    limits: helperLimits,
+                    maximizingPlayer: maximizingPlayer,
+                    isCancelled: { self.isStopRequested() },
+                    onInfo: nil,
+                    tt: self.transpositionTable,
+                    beginNewSearch: false
+                )
+            }
+            thread.stackSize = Self.searchStackSize
+            thread.name = "chessblazer.helper.\(helperIndex)"
+            thread.qualityOfService = .userInitiated
+            thread.start()
+        }
+        
         searchGroup.enter()
-        let thread = Thread { [self] in
+        let main = Thread { [self] in
             defer { self.searchGroup.leave() }
-            self.transpositionTable.resize(megabytes: self.uciOptions.hashSizeMB)
             let move = findBestMove(
                 game: self.game,
                 limits: limits,
                 maximizingPlayer: maximizingPlayer,
                 isCancelled: { self.isStopRequested() },
                 onInfo: { self.sendOutput(output: $0) },
-                tt: self.transpositionTable
+                tt: self.transpositionTable,
+                beginNewSearch: false
             )
+            self.requestStop()
             let chosen: Move?
             if let move, rootMoves.contains(move) {
                 chosen = move
@@ -138,10 +171,10 @@ public final class Engine: @unchecked Sendable {
                 self.sendOutput(output: "bestmove 0000")
             }
         }
-        thread.stackSize = Self.searchStackSize
-        thread.name = "chessblazer.search"
-        thread.qualityOfService = .userInitiated
-        thread.start()
+        main.stackSize = Self.searchStackSize
+        main.name = "chessblazer.search"
+        main.qualityOfService = .userInitiated
+        main.start()
     }
     
     private func requestStop() {

@@ -37,12 +37,14 @@ enum SyzygyWDL: Int {
     case win = 4
 }
 
-/// Syzygy tablebase access via `SyzygyPath`. Thread-safe for init; probes run on the search thread.
+/// Syzygy tablebase access via `SyzygyPath`. Init and probes are serialized.
 enum Syzygy {
     /// Below mate, above normal eval — used for WDL cutoffs in search.
     static let tablebaseWin = MATE_VALUE - 8_000
     
     private static let lock = NSLock()
+    /// Serializes Fathom probes (built with TB_NO_THREADS for Xcode/SPM).
+    private static let probeLock = NSLock()
     private static var configuredPath = ""
     private static var largestPieces = 0
     
@@ -90,6 +92,7 @@ enum Syzygy {
         guard pieceCount(bitboards: board.bitboards) <= largest else { return nil }
         
         let bb = bitboards(for: board)
+        probeLock.lock()
         let result = chessblazer_tb_probe_wdl(
             bb.white, bb.black, bb.kings, bb.queens, bb.rooks, bb.bishops, bb.knights, bb.pawns,
             0,
@@ -97,6 +100,7 @@ enum Syzygy {
             UInt32(bb.ep),
             board.currentTurnColor == .white
         )
+        probeLock.unlock()
         guard result != TB_RESULT_FAILED else { return nil }
         return SyzygyWDL(rawValue: Int(result))
     }
@@ -123,6 +127,7 @@ enum Syzygy {
         guard pieceCount(bitboards: board.bitboards) <= largest else { return nil }
         
         let bb = bitboards(for: board)
+        probeLock.lock()
         let result = chessblazer_tb_probe_root(
             bb.white, bb.black, bb.kings, bb.queens, bb.rooks, bb.bishops, bb.knights, bb.pawns,
             UInt32(min(max(board.halfmoveClock, 0), 100)),
@@ -131,6 +136,7 @@ enum Syzygy {
             board.currentTurnColor == .white,
             nil
         )
+        probeLock.unlock()
         if result == TB_RESULT_FAILED || result == TB_RESULT_CHECKMATE || result == TB_RESULT_STALEMATE {
             return nil
         }
