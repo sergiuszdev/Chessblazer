@@ -19,7 +19,7 @@ Check it out on [Lichess](https://lichess.org/@/TheChessblazer)
 
 
 
-<i>it's a bit smarter now — opening book, syzygy tablebases, and it even once beat stockfish level 6</i>
+<i>it's a bit smarter now, it even once beat stockfish level 6</i>
 
 ## Game logic
 ### Implemented
