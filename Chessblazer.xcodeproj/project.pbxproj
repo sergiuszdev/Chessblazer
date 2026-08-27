@@ -49,6 +49,10 @@
 		318129272C5440A0002F1E40 /* BoardPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 318129262C5440A0002F1E40 /* BoardPrinter.swift */; };
 		31A0B01582D484A88000CCDF /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
 		31A0B01592CB83F7B0077E27 /* Zobrist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0157CB83F7B0077E27A /* Zobrist.swift */; };
+		31A0B01682D484A88000CCDF /* Polyglot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0167CB83F7B0077E27A /* Polyglot.swift */; };
+		31A0B01692CB83F7B0077E27 /* Polyglot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0167CB83F7B0077E27A /* Polyglot.swift */; };
+		31A0B01782D484A88000CCDF /* PolyglotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */; };
+		31A0B01792CB83F7B0077E27 /* PolyglotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */; };
 		31AC3B692D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
 		31AC3B6A2D4A7C9A0018BE3E /* NotationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */; };
 		31B0111582D484A88000CCDF /* TranspositionTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B011157CB83F7B0077E27A /* TranspositionTable.swift */; };
@@ -99,6 +103,8 @@
 		318129262C5440A0002F1E40 /* BoardPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardPrinter.swift; sourceTree = "<group>"; };
 		319A81B72CC07AD500BDD48D /* showcase2.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = showcase2.gif; sourceTree = "<group>"; };
 		31A0B0157CB83F7B0077E27A /* Zobrist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zobrist.swift; sourceTree = "<group>"; };
+		31A0B0167CB83F7B0077E27A /* Polyglot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Polyglot.swift; sourceTree = "<group>"; };
+		31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolyglotKeys.swift; sourceTree = "<group>"; };
 		31AC3B682D4A7C9A0018BE3E /* NotationParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotationParser.swift; sourceTree = "<group>"; };
 		31B011157CB83F7B0077E27A /* TranspositionTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranspositionTable.swift; sourceTree = "<group>"; };
 		31B10B2B2CB83F7B0077E27A /* BoardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardState.swift; sourceTree = "<group>"; };
@@ -223,6 +229,8 @@
 				318129262C5440A0002F1E40 /* BoardPrinter.swift */,
 				31B10B2B2CB83F7B0077E27A /* BoardState.swift */,
 				31A0B0157CB83F7B0077E27A /* Zobrist.swift */,
+				31A0B0167CB83F7B0077E27A /* Polyglot.swift */,
+				31A0B0177CB83F7B0077E27A /* PolyglotKeys.swift */,
 				31B011157CB83F7B0077E27A /* TranspositionTable.swift */,
 				3181291A2C51B3EC002F1E40 /* Pieces.swift */,
 				31B10B472CB89B780077E27A /* GameEngine.swift */,
@@ -374,6 +382,8 @@
 				3103B6BD2D484A88000CCDFA /* BoardPrinter.swift in Sources */,
 				3103B6BE2D484A88000CCDFA /* BoardState.swift in Sources */,
 				31A0B01582D484A88000CCDF /* Zobrist.swift in Sources */,
+				31A0B01682D484A88000CCDF /* Polyglot.swift in Sources */,
+				31A0B01782D484A88000CCDF /* PolyglotKeys.swift in Sources */,
 				31B0111582D484A88000CCDF /* TranspositionTable.swift in Sources */,
 				3103B6BF2D484A88000CCDFA /* Pieces.swift in Sources */,
 				3103B6C02D484A88000CCDFA /* GameEngine.swift in Sources */,
@@ -400,6 +410,8 @@
 				318129212C5277FA002F1E40 /* Engine.swift in Sources */,
 				31B10B2C2CB83F7B0077E27A /* BoardState.swift in Sources */,
 				31A0B01592CB83F7B0077E27 /* Zobrist.swift in Sources */,
+				31A0B01692CB83F7B0077E27 /* Polyglot.swift in Sources */,
+				31A0B01792CB83F7B0077E27 /* PolyglotKeys.swift in Sources */,
 				31B0111592CB83F7B0077E27 /* TranspositionTable.swift in Sources */,
 				31EF3B682C622DE300DF07A3 /* PieceSquareTables.swift in Sources */,
 				317F00902C584924000E4AD6 /* GenerateMoves.swift in Sources */,
