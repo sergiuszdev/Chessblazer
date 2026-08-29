@@ -1,0 +1,10 @@
+.git
+.build
+.swiftpm
+.DS_Store
+**/.DS_Store
+*.xcodeproj/xcuserdata
+Chessblazer/ModuleCache.noindex
+Chessblazer/SDKStatCaches.noindex
+Chessblazer/main
+Books/*.bin

@@ -2,6 +2,9 @@
 .swiftpm/
 *.xcodeproj/xcuserdata/
 .DS_Store
+Chessblazer/ModuleCache.noindex/
+Chessblazer/SDKStatCaches.noindex/
+Chessblazer/main
 
 # Local Polyglot opening books (drop a .bin here; tests generate their own)
 Books/*.bin

@@ -30,7 +30,14 @@ let package = Package(
             name: "Chessblazer",
             dependencies: ["Fathom"],
             path: "Chessblazer",
-            exclude: ["todo.md"]
+            exclude: [
+                "todo.md",
+                "ModuleCache.noindex",
+                "SDKStatCaches.noindex",
+                "main",
+                "ChessEngine/MoveGenerator/bishopShifts",
+                "ChessEngine/MoveGenerator/rookShifts",
+            ]
         ),
         .executableTarget(
             name: "ChessblazerUCI",
