@@ -7,7 +7,6 @@ let package = Package(
     platforms: [
         .macOS(.v14),
         .iOS(.v17),
-        .linux(.v6.1),
     ],
     products: [
         .library(name: "Chessblazer", targets: ["Chessblazer"]),
